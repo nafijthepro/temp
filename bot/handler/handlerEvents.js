@@ -69,6 +69,13 @@ function getRoleConfig(utils, command, isGroup, threadData, commandName) {
 	// }
 }
 
+
+//code by nafij 
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+//end by nafij
+
 function isBannedOrOnlyAdmin(userData, threadData, senderID, threadID, isGroup, commandName, message, lang) {
 	const config = global.GoatBot.config;
 	const { adminBot, hideNotiMessage } = config;
@@ -325,6 +332,9 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 		 +------------------------------------------------+
 		*/
 		async function onChat() {
+			await
+			delay(global.GoatBot.config.globalDelay || 1000);
+			
 			const allOnChat = GoatBot.onChat || [];
 			const args = body ? body.split(/ +/) : [];
 			for (const key of allOnChat) {
@@ -377,6 +387,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 			}
 		}
 
+		
 
 		/*
 		 +------------------------------------------------+
