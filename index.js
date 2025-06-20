@@ -41,27 +41,86 @@ app.get('/test', (req, res) => {
   res.sendFile(path.join(__dirname, 'test.html'));
 });
 
-// Route: /logs viewer
+// Route: /logs viewer (enhanced UI)
 app.get("/logs", (req, res) => {
   res.send(`
-    <html><head><title>GoatBot Logs</title>
-    <style>
-      body { font-family: monospace; background: #000; color: #0f0; padding: 10px; }
-      #log { height: 90vh; overflow-y: scroll; white-space: pre-wrap; }
-    </style></head><body>
-    <h2>📜 GoatBot Logs (Realtime)</h2>
-    <div id="log">Loading...</div>
-    <script>
-      const log = document.getElementById('log');
-      fetch('/logs.txt').then(r => r.text()).then(t => log.textContent = t);
-      const ws = new WebSocket("wss://" + location.host);
-      ws.onmessage = e => { log.textContent += "\\n" + e.data; log.scrollTop = log.scrollHeight; };
-    </script>
-    </body></html>
+  <html>
+    <head>
+      <title>GoatBot Logs</title>
+      <style>
+        body { font-family: monospace; background: #000; color: #0f0; padding: 10px; }
+        #log { height: 80vh; overflow-y: scroll; white-space: pre-wrap; border: 1px solid #444; padding: 10px; margin-bottom: 10px; }
+        .error { color: red; }
+        button { background: #111; color: #0f0; border: 1px solid #0f0; padding: 5px 10px; margin-right: 5px; cursor: pointer; }
+        button:hover { background: #222; }
+      </style>
+    </head>
+    <body>
+      <h2>📜 GoatBot Logs (Realtime)</h2>
+      <div id="log">Loading...</div>
+      <div>
+        <button onclick="copyLogs()">📋 Copy</button>
+        <a href="/logs.txt" download><button>📥 Download</button></a>
+        <button onclick="scrollToTop()">⬆️ Top</button>
+        <button onclick="scrollToBottom()">⬇️ Bottom</button>
+        <button onclick="toggleAutoScroll()">🔁 Autoscroll: <span id="autoscroll-status">ON</span></button>
+      </div>
+
+      <script>
+        const log = document.getElementById("log");
+        let autoScroll = true;
+
+        // Load initial logs
+        fetch("/logs.txt")
+          .then(r => r.text())
+          .then(t => {
+            log.innerHTML = colorize(t);
+            if (autoScroll) log.scrollTop = log.scrollHeight;
+          });
+
+        // WebSocket
+        const ws = new WebSocket("wss://" + location.host);
+        ws.onmessage = e => {
+          const line = colorize(e.data);
+          log.innerHTML += "<br>" + line;
+          if (autoScroll) log.scrollTop = log.scrollHeight;
+        };
+
+        // Highlight errors
+        function colorize(text) {
+          return text.replace(/\\n/g, "<br>").replace(/\.*?ERROR.*?\/gi, match => \`<span class="error">\${match}</span>\`);
+        }
+
+        // Scroll & copy
+        function scrollToTop() {
+          log.scrollTop = 0;
+        }
+
+        function scrollToBottom() {
+          log.scrollTop = log.scrollHeight;
+        }
+
+        function toggleAutoScroll() {
+          autoScroll = !autoScroll;
+          document.getElementById("autoscroll-status").textContent = autoScroll ? "ON" : "OFF";
+        }
+
+        function copyLogs() {
+          const temp = document.createElement("textarea");
+          temp.value = log.textContent;
+          document.body.appendChild(temp);
+          temp.select();
+          document.execCommand("copy");
+          document.body.removeChild(temp);
+          alert("✅ Logs copied to clipboard!");
+        }
+      </script>
+    </body>
+  </html>
   `);
 });
 
-// Route: Serve saved logs
+// Serve logs.txt for download
 app.use("/logs.txt", express.static(logPath));
 
 // Start web server
