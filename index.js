@@ -1,39 +1,77 @@
 const express = require('express');
 const path = require('path');
 const { spawn } = require("child_process");
+const fs = require("fs");
+const http = require("http");
+const WebSocket = require("ws");
 const log = require("./logger/log.js");
 
 const app = express();
-const port = 3000;
+const server = http.createServer(app);
+const port = process.env.PORT || 3000;
+
+// Ensure log storage
+if (!fs.existsSync("./cache")) fs.mkdirSync("./cache");
+const logPath = path.join(__dirname, "cache", "logs.txt");
+fs.writeFileSync(logPath, "", { flag: "a" });
+const logStream = fs.createWriteStream(logPath, { flags: "a" });
+
+let clients = [];
+
+const originalLog = console.log;
+console.log = (...args) => {
+  const logMsg = args.map(arg => (typeof arg === "object" ? JSON.stringify(arg) : String(arg))).join(" ");
+  originalLog(logMsg);
+  logStream.write(logMsg + "\n");
+  clients.forEach(ws => ws.readyState === 1 && ws.send(logMsg));
+};
+
+
+//this project is created by ntkhang and i modified it for my easyness author @ntkhang.
+
+
+// WebSocket for live logs
+const wss = new WebSocket.Server({ server });
+wss.on("connection", ws => {
+  clients.push(ws);
+  ws.send("[Connected] ✅ GoatBot log viewer active");
+  ws.on("close", () => {
+    clients = clients.filter(c => c !== ws);
+  });
+});
 
 // Route: /test
 app.get('/test', (req, res) => {
   res.sendFile(path.join(__dirname, 'test.html'));
 });
 
-// Start web server
-app.listen(port, () => {
-  console.log(`Web server running at http://localhost:${port}`);
+// Route: /logs viewer
+app.get("/logs", (req, res) => {
+  res.send(`
+    <html><head><title>GoatBot Logs</title>
+    <style>
+      body { font-family: monospace; background: #000; color: #0f0; padding: 10px; }
+      #log { height: 90vh; overflow-y: scroll; white-space: pre-wrap; }
+    </style></head><body>
+    <h2>📜 GoatBot Logs (Realtime)</h2>
+    <div id="log">Loading...</div>
+    <script>
+      const log = document.getElementById('log');
+      fetch('/logs.txt').then(r => r.text()).then(t => log.textContent = t);
+      const ws = new WebSocket("wss://" + location.host);
+      ws.onmessage = e => { log.textContent += "\\n" + e.data; log.scrollTop = log.scrollHeight; };
+    </script>
+    </body></html>
+  `);
 });
 
-/**
- * @author NTKhang
- * ! The source code is written by NTKhang, please don't change the author's name everywhere. Thank you for using
- * ! Official source code: https://github.com/ntkhang03/Goat-Bot-V2
- * ! If you do not download the source code from the above address, you are using an unknown version and at risk of having your account hacked
- *
- * English:
- * ! Please do not change the below code, it is very important for the project.
- * It is my motivation to maintain and develop the project for free.
- * ! If you change it, you will be banned forever
- * Thank you for using
- *
- * Vietnamese:
- * ! Vui lòng không thay đổi mã bên dưới, nó rất quan trọng đối với dự án.
- * Nó là động lực để tôi duy trì và phát triển dự án miễn phí.
- * ! Nếu thay đổi nó, bạn sẽ bị cấm vĩnh viễn
- * Cảm ơn bạn đã sử dụng
- */
+// Route: Serve saved logs
+app.use("/logs.txt", express.static(logPath));
+
+// Start web server
+server.listen(port, () => {
+  console.log(`Web server running at http://localhost:${port}`);
+});
 
 function startProject() {
 	const child = spawn("node", ["Goat.js"], {
