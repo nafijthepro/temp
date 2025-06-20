@@ -313,7 +313,7 @@ app.use((req, res, next) => {
 	app.use("/verifyfbid", verifyFbidRoute);
 	app.use("/api", apiRouter);
 	//notun line
- app.get("/about-nafij", (req, res) => {
+ app.get("/about-nafij2", (req, res) => {
   res.sendFile(path.join(__dirname, "useless.html"));
 });
 	app.get("*", (req, res) => {
