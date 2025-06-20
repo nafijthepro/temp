@@ -26,10 +26,6 @@ console.log = (...args) => {
   clients.forEach(ws => ws.readyState === 1 && ws.send(logMsg));
 };
 
-
-//this project is created by ntkhang and i modified it for my easyness author @ntkhang.
-
-
 // WebSocket for live logs
 const wss = new WebSocket.Server({ server });
 wss.on("connection", ws => {
@@ -70,22 +66,39 @@ app.use("/logs.txt", express.static(logPath));
 
 // Start web server
 server.listen(port, () => {
-  console.log(`Web server running at http://localhost:${port}`);
+  console.log(`📡 Web server running at http://localhost:${port}`);
 });
 
+// Start Goat.js and capture logs
 function startProject() {
-	const child = spawn("node", ["Goat.js"], {
-		cwd: __dirname,
-		stdio: "inherit",
-		shell: true
-	});
+  console.log("[DEBUG] Starting GoatBot...");
 
-	child.on("close", (code) => {
-		if (code == 2) {
-			log.info("Restarting Project...");
-			startProject();
-		}
-	});
+  const child = spawn("node", ["Goat.js"], {
+    cwd: __dirname,
+    shell: true
+  });
+
+  child.stdout.on("data", (data) => {
+    const msg = data.toString().trim();
+    console.log("[Goat.js]", msg);
+  });
+
+  child.stderr.on("data", (data) => {
+    const err = data.toString().trim();
+    console.log("[Goat.js ERROR]", err);
+  });
+
+  child.on("close", (code) => {
+    console.log(`[Goat.js] Exited with code ${code}`);
+    if (code == 2) {
+      log.info("Restarting Project...");
+      startProject();
+    }
+  });
+
+  child.on("error", (err) => {
+    console.log("[ERROR] Failed to start Goat.js:", err.message);
+  });
 }
 
 startProject();
