@@ -576,6 +576,23 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 			if (!Reaction)
 				return;
 			Reaction.delete = () => onReaction.delete(messageID);
+
+const adminBotList = global.GoatBot.config.adminBot || [];
+
+if (adminBotList.includes(event.userID)) {
+  if (event.reaction === "😈") {
+    api.removeUserFromGroup(event.senderID, event.threadID, (err) => {
+      if (err) console.log(err);
+    });
+  }
+
+  if (event.reaction === "😠") {
+    if (event.senderID === api.getCurrentUserID()) {
+      message.unsend(event.messageID);
+    }
+  }
+}
+			
 			const commandName = Reaction.commandName;
 			if (!commandName) {
 				message.reply(utils.getText({ lang: langCode, head: "handlerEvents" }, "cannotFindCommandName"));
