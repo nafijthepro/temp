@@ -1,7 +1,7 @@
 const axios = require("axios");
 const baseApiUrl = async () => {
     const base = await axios.get(
-        `https://raw.githubusercontent.com/Blankid018/D1PT0/main/baseApiUrl.json`,
+        `https://raw.githubusercontent.com/Mostakim0978/D1PT0/refs/heads/main/baseApiUrl.json`,
     );
     return base.data.api;
 };
@@ -30,17 +30,19 @@ module.exports = {
         countDown: 5,
         role: 0,
         description: "𝗚𝗲𝘁 𝗚𝗿𝗼𝘂𝗽 𝗜𝗺𝗮𝗴𝗲",
-        category: "𝗜𝗠𝗔𝗚𝗘",
+        category: "image",
         guide: "{pn} --color [color] --bgcolor [color] --admincolor [color] --membercolor [color]",
     },
 
     onStart: async function ({ api, args, event, message }) {
         try {
             let tid;
-            let color = "red";
-            let bgColor = "https://telegra.ph/file/404fd6686c995d8db9ebf.jpg";
+            let color = "white"; //text color
+            let bgColor;
             let adminColor = "yellow";
-            let memberColor = "";
+            let memberColor = "cyan";
+            let groupborderColor = "lime";
+            let glow = false;
 
             for (let i = 0; i < args.length; i++) {
                 switch (args[i]) {
@@ -60,6 +62,14 @@ module.exports = {
                         memberColor = args[i + 1];
                         args.splice(i, 2);
                         break;
+                    case "--groupBorder":
+                    groupborderColor = args[i + 1];
+                    args.splice(i,2);
+                        break;
+                        case "--glow":
+                    glow = args[i + 1];
+                    args.splice(i,2);
+                        break;
                 }
             }
 
@@ -78,6 +88,8 @@ module.exports = {
                 admincolor: adminColor,
                 membercolor: memberColor,
                 color: color,
+                groupborderColor,
+                glow
             };
 
             if (data2) {
@@ -90,11 +102,12 @@ module.exports = {
                 );
             }
             const { data } = await axios.post(
-                `${await baseApiUrl()}/groupPhoto`,
+                `${await baseApiUrl()}/gcimg`,
                 data2,
+                { responseType: "stream" }
             );
 
-            if (data.img) {
+            
                 api.setMessageReaction(
                     "✅",
                     event.messageID,
@@ -103,9 +116,9 @@ module.exports = {
                 message.unsend(waitingMsg.messageID);
                 message.reply({
                     body: `𝙷𝚎𝚛𝚎 𝚒𝚜 𝚢𝚘𝚞𝚛 𝚐𝚛𝚘𝚞𝚙 𝚒𝚖𝚊𝚐𝚎 <😘`,
-                    attachment: await global.utils.getStreamFromURL(data.img),
+                    attachment: data,
                 });
-            }
+            
         } catch (error) {
             console.log(error);
             message.reply(`❌ | 𝙴𝚛𝚛𝚘𝚛: ${error.message}`);
