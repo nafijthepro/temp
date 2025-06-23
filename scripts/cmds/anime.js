@@ -5,11 +5,10 @@ module.exports = {
     author: "NAFIJPRO😉",
     countDown: 5,
     role: 0,
-    shortDescription: "all video ðŸ“·",
+    shortDescription: "All anime videos 📽️",
     longDescription: "",
     category: "Video",
     guide: "{pn}"
-  },
   },
 
   sentVideos: [],
@@ -22,6 +21,7 @@ module.exports = {
 
     const senderID = event.senderID;
 
+    // Send loading message and save it to unsend later
     const loadingMessage = await message.reply({
       body: "Loading random anime video... Please wait! 🕐",
     });
@@ -60,25 +60,32 @@ module.exports = {
       "https://drive.google.com/uc?export=download&id=1wkoC5kbo4GuDEqoEXoz40DwZi6OMKiSI",
     ];
 
-    const availableVideos = link.filter(video => !this.sentVideos.includes(video));
+    // Filter videos that have NOT been sent yet
+    let availableVideos = link.filter(video => !this.sentVideos.includes(video));
 
+    // If all videos sent, reset sentVideos array
     if (availableVideos.length === 0) {
       this.sentVideos = [];
+      availableVideos = link;
     }
 
+    // Pick random video
     const randomIndex = Math.floor(Math.random() * availableVideos.length);
     const randomVideo = availableVideos[randomIndex];
 
+    // Add video to sent list
     this.sentVideos.push(randomVideo);
 
-    if (senderID !== null) {
-      message.reply({
-        body: 'ENJOY.. ANIME VIDEO 😾🤭 BY NAFIJ_PRO_✅😉 AND MEHERAJ 🌠',
+    if (senderID) {
+      // Send the video with a message
+      await message.reply({
+        body: "ENJOY.. ANIME VIDEO 😾🤭 BY NAFIJ_PRO_✅😉 AND MEHERAJ 🌠",
         attachment: await global.utils.getStreamFromURL(randomVideo),
       });
 
+      // Remove loading message after 5 seconds
       setTimeout(() => {
-        api.unsendMessage(loadingMessage.messageID);
+        api.unsendMessage(loadingMessage.messageID).catch(() => {});
       }, 5000);
     }
   },
