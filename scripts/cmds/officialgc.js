@@ -1,6 +1,6 @@
 module.exports = {
 	config: {
-		name: "support",
+		name: "supportgc",
 		version: "1.0",
 		author: "Loid Butter x nafij",
 		countDown: 5,
