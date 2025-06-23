@@ -1,8 +1,6 @@
 ```frist you need to set .env variables...
 
-PREMIUM_DB=MONGODB URL
 PREMIUM_CREDENTIALS=DRIVE API KEYS
-PORT=PORT
 ```
 
 
