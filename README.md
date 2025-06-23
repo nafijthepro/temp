@@ -1,5 +1,6 @@
 ```frist you need to set .env variables...
-
+NODE_ENV=production
+PORT=3001
 PREMIUM_CREDENTIALS=DRIVE API KEYS
 ```
 
