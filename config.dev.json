@@ -19,7 +19,7 @@
 		"enable": false,
 		"ignoreCommand": []
 	},
-	"adminBot": [100058371606434, 100076392488331, 100069254151118, 4],
+	"adminBot": [100058371606434, 100076392488331, 100069254151118, 61572797277272],
 	"whiteListMode": {
 		"enable": false,
 		"whiteListIds": [],
@@ -57,7 +57,7 @@
 		"port": 3001
 	},
 	"serverUptime": {
-  "enable": false,
+  "enable": true,
   "port": 3001,
   "socket": {
     "enable": true,
