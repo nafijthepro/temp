@@ -12,11 +12,12 @@ module.exports = {
     const { threadID } = event;
     const dataAddedParticipants = event.logMessageData.addedParticipants;
     const botID = api.getCurrentUserID();
-/*
+
+    /*
     // If the bot was added, set nickname
     if (dataAddedParticipants.some(item => item.userFbId == botID)) {
       api.changeNickname("😾 angry sizukua🥺🌷", threadID, botID);
     }
+    */
   }
 };
-*/
