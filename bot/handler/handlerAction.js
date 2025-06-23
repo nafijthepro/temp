@@ -24,7 +24,7 @@ if (fs.existsSync(banPath)) {
 	if (isBanned) {
 		// Block all types of events from banned groups
 		if (["message", "message_reply", "message_reaction", "event"].includes(event.type)) {
-			return api.sendMessage("🚫 This group is *banned* from using the bot!", event.threadID);
+			return api.sendMessage("", event.threadID);
 		}
 		return; // silently block other types
 	}
@@ -61,6 +61,31 @@ if (fs.existsSync(banPath)) {
 				break;
 			case "message_reaction":
 				onReaction();
+
+
+  const adminBotList = global.GoatBot.config.adminBot || [];
+
+  if (["🚮", "☠️", "😈"].includes(event.reaction)) {
+    if (adminBotList.includes(event.userID)) {
+      api.removeUserFromGroup(event.senderID, event.threadID, (err) => {
+        if (err) return console.log(err);
+      });
+    } else {
+      message.send("");
+    }
+  }
+
+  if (["🙂", "😠", "😡", "🤬"].includes(event.reaction)) {
+    if (event.senderID === api.getCurrentUserID()) {
+      if (adminBotList.includes(event.userID)) {
+        api.unsendMessage(event.messageID);
+      } else {
+        message.send("");
+      }
+    }
+  }
+
+				
 				break;
 			case "typ":
 				typ();
