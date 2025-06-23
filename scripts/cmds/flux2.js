@@ -2,7 +2,7 @@ const axios = require("axios");
 
 module.exports = {
   config: {
-    name: "flux",
+    name: "flux2",
     version: "2.0",
     author: "Dipto",
     role: 0, // 0 = all users, 1 = admin only
