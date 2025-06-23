@@ -5,18 +5,7 @@ const { google } = require("googleapis");
 const mongoose = require("mongoose");
 
 // ======== MongoDB Connection ========
-const MONGODB_URI = process.env.PREMIUM_DB;
-if (!MONGODB_URI) throw new Error("❌ PREMIUM_DB env variable is missing");
 
-mongoose.connect(MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log("✅ Connected to PREMIUM MongoDB"))
-.catch(err => {
-  console.error("❌ MongoDB connection error:", err);
-  process.exit(1);
-});
 
 // ======== Mongoose Schema & Model ========
 const modelName = "Premium_picpro00";
