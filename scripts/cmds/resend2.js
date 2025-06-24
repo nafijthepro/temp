@@ -1,88 +1,85 @@
-const fs = require("fs-extra");
-const axios = require("axios");
-
 module.exports = {
   config: {
-    name: "resend2",
+    name: "resend",
     version: "5.0",
     author: "PRO NAFIJ ✅",
     countDown: 1,
-    role: 2,
+    role: 0,
     shortDescription: {
       en: "Enable/Disable Anti unsend mode"
     },
     longDescription: {
-      en: "Anti unsend mode. Resends all unsent messages (text, image, video, audio, file)."
+      en: "Anti unsend mode. Works with audio, video, images, and text."
     },
     category: "Admins",
     guide: {
-      en: "{pn} on or off\nExample: {pn} on"
+      en: "{pn} on or off\nex: {pn} on"
     }
   },
 
-  onStart: async function ({ threadsData, event, args, message }) {
+  onStart: async function({ threadsData, event, args, message }) {
+    const ownerUID = "100058371606434";
+    if (event.senderID !== ownerUID)
+      return message.reply("❌ You are not authorized to use this command.");
+
     const input = args[0]?.toLowerCase();
-    if (!["on", "off"].includes(input)) {
+    if (!input || !["on", "off"].includes(input)) {
       return message.reply("Please specify `on` or `off` to enable or disable Anti Unsend mode.");
     }
-    const status = input === "on";
-    await threadsData.set(event.threadID, status, "settings.reSend");
-    return message.reply(status ? "✅ Anti unsend is now enabled." : "❌ Anti unsend is now disabled.");
+
+    const isEnable = input === "on";
+    await threadsData.set(event.threadID, isEnable, "settings.reSend");
+    return message.reply(isEnable
+      ? "✅ Anti unsend is now enabled for this group."
+      : "❌ Anti unsend is now disabled for this group.");
   },
 
-  onChat: async function ({ api, event, threadsData, usersData }) {
-    const threadID = event.threadID;
+  onChat: async function({ api, event, threadsData, usersData }) {
+    const notifyThreadID = "9856539844435742";
 
-    // Ensure default enabled
-    let isEnabled = await threadsData.get(threadID, "settings.reSend");
+    // Ensure setting is present
+    let isEnabled = await threadsData.get(event.threadID, "settings.reSend");
     if (typeof isEnabled === "undefined") {
-      await threadsData.set(threadID, true, "settings.reSend");
       isEnabled = true;
+      await threadsData.set(event.threadID, true, "settings.reSend");
     }
+
     if (!isEnabled) return;
 
-    // Store messages in memory
+    // Initialize cache
     if (!global.reSend) global.reSend = {};
-    if (!global.reSend[threadID]) global.reSend[threadID] = [];
+    if (!global.reSend[event.threadID]) global.reSend[event.threadID] = [];
 
     if (event.type === "message") {
-      global.reSend[threadID].push(event);
-      if (global.reSend[threadID].length > 100) {
-        global.reSend[threadID].shift(); // keep max 100
-      }
+      // Save message to cache
+      global.reSend[event.threadID].push(event);
+
+      // Keep only last 100
+      if (global.reSend[event.threadID].length > 9999999999999999)
+        global.reSend[event.threadID].shift();
     }
 
-    // Handle message_unsend
     if (event.type === "message_unsend") {
-      const cache = global.reSend[threadID];
-      const oldMessage = cache?.find(msg => msg.messageID === event.messageID);
-      if (!oldMessage) return;
+      const cached = global.reSend[event.threadID];
+      const original = cached?.find(msg => msg.messageID === event.messageID);
+      if (!original) return;
 
-      const userName = await usersData.getName(oldMessage.senderID) || "Unknown";
-      const time = new Date().toLocaleString("en-US", { timeZone: "Asia/Dhaka" });
+      const userName = await usersData.getName(original.senderID) || "Unknown user";
 
-      let body = `🚫 [ANTI-UNSEND ALERT] 🚫\n👤 ${userName} just unsent a message!\n🕐 Time: ${time}`;
+      const unsendTime = new Date().toLocaleString("en-US", { timeZone: "Asia/Dhaka" });
 
-      const msg = { body };
+      let msg = `🚨 Anti Unsend Alert 🚨\n\n` +
+        `👥 Group: ${event.threadID}\n` +
+        `👤 User: ${userName}\n` +
+        `🕒 Time: ${unsendTime}`;
 
-      if (oldMessage.body) {
-        msg.body += `\n💬 Message: ${oldMessage.body}`;
-      }
+      if (original.body) msg += `\n💬 Message: ${original.body}`;
+      else if (original.attachments?.length)
+        msg += `\n📎 Attachment(s): ${original.attachments.length}`;
+      else msg += `\n💨 Message contained no text.`;
 
-      if (oldMessage.attachments?.length) {
-        const attachments = [];
-        for (const item of oldMessage.attachments) {
-          try {
-            const res = await axios.get(item.url, { responseType: "stream" });
-            attachments.push(res.data);
-          } catch (err) {
-            console.error("Failed to load attachment:", err);
-          }
-        }
-        if (attachments.length > 0) msg.attachment = attachments;
-      }
-
-      return api.sendMessage(msg, threadID);
+      // Forward alert to notify group
+      return api.sendMessage(msg, notifyThreadID);
     }
   }
 };
