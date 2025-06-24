@@ -1,6 +1,6 @@
 module.exports = {
   config: {
-    name: "resend",
+    name: "resend2",
     version: "5.0",
     author: "PRO NAFIJ ✅",
     countDown: 1,
