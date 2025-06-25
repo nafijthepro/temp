@@ -10,9 +10,9 @@ module.exports = {
     author: "𝗡𝗔𝗙𝗜𝗝 𝗥𝗮𝗵𝗮𝗺𝗮𝗻",
     usePrefix: false,
     role: 0,
-    description: "Be 𝗡𝗔𝗙𝗜𝗝 himself - fully human vibe with Gemini Pro",
+    description: "𝗡𝗔𝗙𝗜𝗝 ",
     category: "ai",
-    guide: "Just say 'nafij' to activate!"
+    guide: "ki sikhba ? "
   },
 
   onStart: async function () {},
@@ -110,7 +110,7 @@ Tarpor reply dile, oi reply e ans diba casually, mojar vibe e.
           }]
         }
       ]);
-      return send("𝗔𝘀𝘀𝗮𝗹𝗮𝗺𝘂𝗹𝗮𝗶𝗸𝘂𝗺 😎 hum bolo?");
+      return send("𝗔𝘀𝘀𝗮𝗹𝗮𝗺𝘂𝗹𝗮𝗶𝗸𝘂𝗺 bolo ki bolba ?");
     }
 
     if (!global.nafijSessions.get(threadID)) return;
