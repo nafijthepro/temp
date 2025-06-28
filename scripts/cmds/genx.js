@@ -12,7 +12,7 @@ const modelMap = {
 
 module.exports = {
   config: {
-    name: "genx",
+    name: "genxpro",
     version: "2.1",
     author: "NAFIJ PRO ✅",
     countDown: 5,
