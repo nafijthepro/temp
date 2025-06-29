@@ -30,7 +30,7 @@ module.exports.onStart = async ({
 
     try {
         if (!args[0]) {
-            const ran = ["Bolo baby😭", "hum🤬", "kou taratari ghum pay amar 😐😑", "Bye ghumabo distrub koiro na 😼"];
+            const ran = ["Bolo baby😭", "hum🤬", "kou taratari ghum pay amar 😐😑", "Bye ghumabo distrub koiro na 😼","i love you kutta 🙏🏾" , "mor tui kutta", "sobai dekho eita akta kutta"];
             return api.sendMessage(ran[Math.floor(Math.random() * ran.length)], event.threadID, event.messageID);
         }
 
@@ -163,7 +163,7 @@ module.exports.onChat = async ({
         const body = event.body ? event.body?.toLowerCase() : ""
         if (body.startsWith("baby") || body.startsWith("bby") || body.startsWith("bot") || body.startsWith("jan") || body.startsWith("babu") || body.startsWith("janu")) {
             const arr = body.replace(/^\S+\s*/, "")
-            const randomReplies = ["😚", "Yes 😀, I am here", "What's up?", "Bolo jaan ki korte panmr jonno"];
+            const randomReplies = ["😚pocha chele", "এটাই দেখা বাকি ছিল 🙂🙂", "তাড়াতাড়ি বলো ঘুমাবো😒🙏🏾", "bal bal koiro pio ghumaite dew😒🙏🏾", "tui akta kutta😾😠" ,"vai tuio ghuma amake o ghumayte de please 🙂🙏🏾", "khoma please 🙂🙏🏾", "oi mama na please"];
             if (!arr) {
 
                 await api.sendMessage(randomReplies[Math.floor(Math.random() * randomReplies.length)], event.threadID, (error, info) => {
