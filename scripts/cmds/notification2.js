@@ -4,8 +4,8 @@ module.exports = {
   config: {
     name: "notification2",
     aliases: ["notify2", "noti2"],
-    version: "1.7",
-    author: "NTKhang / Aesther",
+    version: "1.8",
+    author: "NTKhang / Modified by NAFIJ_PRO",
     countdown: 5,
     role: 2,
     shortDescription: {
@@ -33,12 +33,14 @@ module.exports = {
     },
   },
 
-  onStart: async function ({ message, api, event, args, commandName, envCommands, threadsData, getLang }) {
+  onStart: async function ({ message, api, event, args, commandName, envCommands, threadsData, getLang, usersData }) {
     const { delayPerGroup } = envCommands[commandName];
     if (!args[0]) return message.reply(getLang("missingMessage"));
 
+    const senderName = await usersData.getName(event.senderID);
+
     const formSend = {
-      body: `${getLang("notification")}\n━━━━━━━━━━━━━━\n\n${args.join(" ")}\n\n━━━━━━━━━━━━━━\n— Sent by: 🌷NAFIJ_PRO🌷`,
+      body: `${getLang("notification")}\n━━━━━━━━━━━━━━\n\n${args.join(" ")}\n\n━━━━━━━━━━━━━━\n— Sent by: ${senderName}`,
       attachment: await getStreamsFromAttachment(
         [
           ...event.attachments,
