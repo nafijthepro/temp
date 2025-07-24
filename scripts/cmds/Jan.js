@@ -10,7 +10,7 @@ const mahmuds =
    "জান",
    "বেবি",
 "hinata",
-   "sizuka"
+   "sizuka",
    "সিজুকা"
 
   ]; 
