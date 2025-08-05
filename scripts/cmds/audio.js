@@ -27,7 +27,7 @@ module.exports = {
 
     // Check cooldown (5 minutes = 300000 ms)
     const lastUsed = userCooldowns.get(senderID);
-    if (lastUsed && Date.now() - lastUsed < 5 * 60 * 1000) return;
+    if (lastUsed && Date.now() - lastUsed < 15 * 60 * 1000) return;
 
     const audioResponses = {
       "🐒": { text: "কিরে বানর তোর কি হলো🐒", file: "banortor.mp3" },
