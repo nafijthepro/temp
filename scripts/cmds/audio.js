@@ -2,29 +2,36 @@ const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
 
+const userCooldowns = new Map(); 
+
 module.exports = {
   config: {
     name: "audio",
-    version: "2.1",
+    version: "2.2",
     author: "ÑÄFÏJ",
-    countDown: 5,
+    countDown: 0,
     role: 0,
     shortDescription: "emoji to audio",
-    longDescription: "emoji to audio",
-    category: "replay",
+    longDescription: "reply with Bangla audio when specific emojis are sent",
+    category: "reply"
   },
 
   onStart: async function () {},
 
   onChat: async function ({ event, message }) {
-    if (!event.body) return;
+    const { senderID, body } = event;
+    if (!body) return;
 
-    const word = event.body.toLowerCase();
+    const word = body.trim();
     const folderPath = path.join(__dirname, "NAFIJ");
+
+    // Check cooldown (5 minutes = 300000 ms)
+    const lastUsed = userCooldowns.get(senderID);
+    if (lastUsed && Date.now() - lastUsed < 5 * 60 * 1000) return;
 
     const audioResponses = {
       "🐒": { text: "কিরে বানর তোর কি হলো🐒", file: "banortor.mp3" },
- "🙂": { text: "সেন্টি খাও কেনো 🙂💔", file: "banortor.mp3" },
+      "🙂": { text: "সেন্টি খাও কেনো 🙂💔", file: "banortor.mp3" },
       "🖕": { text: "আঙুল তোমার পেছনে ভরে দিবো 😹", file: "angul79.mp3" },
       "😒": { text: "চোখ টা অনেক সুন্দর আমার মত😩🌷", file: "attitude.mp3" },
       "🥵": { text: "ছাড়ো না বেবি ব্যথা লাগে😧", file: "betha.mp3" },
@@ -55,11 +62,12 @@ module.exports = {
       "👀": { text: "ফোকাস ওন কেরিয়ার 🤕", file: "Focus on career.mp3" }
     };
 
-    if (!audioResponses[word]) return;
+    const matched = audioResponses[word];
+    if (!matched) return;
 
-    const fileName = audioResponses[word].file;
+    const fileName = matched.file;
     const filePath = path.join(folderPath, fileName);
-    const textMsg = audioResponses[word].text;
+    const textMsg = matched.text;
 
     try {
       await fs.promises.mkdir(folderPath, { recursive: true });
@@ -68,7 +76,6 @@ module.exports = {
         const fileURL = getObscuredURL("nafij") + "/" + encodeURIComponent(fileName);
         const response = await axios.get(fileURL, { responseType: 'stream' });
         const writer = fs.createWriteStream(filePath);
-
         await new Promise((resolve, reject) => {
           response.data.pipe(writer);
           writer.on("finish", resolve);
@@ -76,11 +83,14 @@ module.exports = {
         });
       }
 
+      userCooldowns.set(senderID, Date.now()); // Set cooldown
       return message.reply({
         body: `「 ${textMsg} 」`,
         attachment: fs.createReadStream(filePath)
       });
-    } catch {
+
+    } catch (err) {
+      console.error("❌ Audio send failed:", err.message);
       return message.reply(`「 ${textMsg} +😑💔 」`);
     }
   }
