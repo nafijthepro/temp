@@ -1,27 +1,29 @@
 module.exports = {
   config: {
     name: "slot",
-    version: "1.0",
-    author: "Samir",
+    version: "2.1",
+    author: "Arijit",
+    countDown: 15,
     shortDescription: {
-      en: "Slot game",
+      en: "slot game 🙂",
     },
     longDescription: {
-      en: "Slot game.",
+      en: "Try your luck in a slot game",
     },
-    category: "Games",
+    category: "game",
   },
+
   langs: {
     en: {
-      invalid_amount: "Enter a valid and positive amount to have a chance to win double",
-      not_enough_money: "Check your balance if you have that amount",
-      spin_message: "Spinning...",
-      win_message: "You won $%1, buddy!",
-      lose_message: "You lost $%1, buddy.",
-      jackpot_message: "Jackpot! You won $%1 with three %2 symbols, buddy!",
+      invalid_amount: "𝗣𝗹𝗲𝗮𝘀𝗲 𝗲𝗻𝘁𝗲𝗿 𝗮 𝘃𝗮𝗹𝗶𝗱 𝗮𝗺𝗼𝘂𝗻𝘁 😿💅",
+      not_enough_money: "𝗣𝗹𝗲𝗮𝘀𝗲 𝗰𝗵𝗲𝗰𝗸 𝘆𝗼𝘂𝗿 𝗯𝗮𝗹𝗮𝗻𝗰𝗲 🤡",
+      win_message: ">🎀\n• 𝐁𝐚𝐛𝐲, 𝐘𝐨𝐮 𝐰𝐨𝐧 $%1\n• 𝐆𝐚𝐦𝐞 𝐑𝐞𝐬𝐮𝐥𝐭𝐬 [ %2 | %3 | %4 ]",
+      lose_message: ">🎀\n• 𝐁𝐚𝐛𝐲, 𝐘𝐨𝐮 𝐥𝐨𝐬𝐭 $%1\n• 𝐆𝐚𝐦𝐞 𝐑𝐞𝐬𝐮𝐥𝐭𝐬 [ %2 | %3 | %4 ]",
+      jackpot_message: ">🎀\n𝐉𝐚𝐜𝐤𝐩𝐨𝐭! 𝐘𝐨𝐮 𝐰𝐨𝐧 $%1 𝐰𝐢𝐭𝐡 𝐭𝐡𝐫𝐞𝐞 %2 𝐬𝐲𝐦𝐛𝐨𝐥𝐬, 𝐁𝐚𝐛𝐲!\n• 𝐆𝐚𝐦𝐞 𝐑𝐞𝐬𝐮𝐥𝐭𝐬 [ %3 | %4 | %5 ]"
     },
   },
-  onStart: async function ({ args, message, event, envCommands, usersData, commandName, getLang }) {
+
+  onStart: async function ({ args, message, event, usersData, getLang }) {
     const { senderID } = event;
     const userData = await usersData.get(senderID);
     const amount = parseInt(args[0]);
@@ -34,46 +36,51 @@ module.exports = {
       return message.reply(getLang("not_enough_money"));
     }
 
-    const slots = ["🍒", "🍇", "🍊", "🍉", "🍋", "🍎", "🍓", "🍑", "🥝"];
-    const slot1 = slots[Math.floor(Math.random() * slots.length)];
-    const slot2 = slots[Math.floor(Math.random() * slots.length)];
-    const slot3 = slots[Math.floor(Math.random() * slots.length)];
+    const slots = ["💚", "💛", "💙", "💜", "🤎", "🤍", "❤"];
+    const results = [
+      slots[Math.floor(Math.random() * slots.length)],
+      slots[Math.floor(Math.random() * slots.length)],
+      slots[Math.floor(Math.random() * slots.length)],
+    ];
 
-    const winnings = calculateWinnings(slot1, slot2, slot3, amount);
-
+    const winnings = calculateWinnings(results, amount);
     await usersData.set(senderID, {
       money: userData.money + winnings,
       data: userData.data,
     });
 
-    const messageText = getSpinResultMessage(slot1, slot2, slot3, winnings, getLang);
-
+    const messageText = formatResult(results, winnings, getLang);
     return message.reply(messageText);
   },
 };
 
-function calculateWinnings(slot1, slot2, slot3, betAmount) {
-  if (slot1 === "🍒" && slot2 === "🍒" && slot3 === "🍒") {
-    return betAmount * 10;
-  } else if (slot1 === "🍇" && slot2 === "🍇" && slot3 === "🍇") {
-    return betAmount * 5;
-  } else if (slot1 === slot2 && slot2 === slot3) {
-    return betAmount * 3;
-  } else if (slot1 === slot2 || slot1 === slot3 || slot2 === slot3) {
-    return betAmount * 2;
-  } else {
-    return -betAmount;
+function calculateWinnings([a, b, c], bet) {
+  if (a === b && b === c) {
+    if (a === "❤") return bet * 10;  // Jackpot
+    return bet * 5;                   // 3 same, non-jackpot
   }
+  if (a === b || b === c || a === c) return bet * 2; // Any two same
+  return -bet; // Lose
 }
 
-function getSpinResultMessage(slot1, slot2, slot3, winnings, getLang) {
-  if (winnings > 0) {
-    if (slot1 === "🍒" && slot2 === "🍒" && slot3 === "🍒") {
-      return getLang("jackpot_message", winnings, "🍒");
-    } else {
-      return getLang("win_message", winnings) + `\${slot1} | ${slot2} | ${slot3} ]`;
-    }
-  } else {
-    return getLang("lose_message", -winnings) + `\${slot1} | ${slot2} | ${slot3} ]`;
+function formatResult([a, b, c], winnings, getLang) {
+  const formattedWinnings = formatMoney(Math.abs(winnings));
+
+  if (a === b && b === c && a === "❤") {
+    return getLang("jackpot_message", formattedWinnings, a, a, b, c);
   }
+
+  if (winnings > 0) {
+    return getLang("win_message", formattedWinnings, a, b, c);
+  }
+
+  return getLang("lose_message", formattedWinnings, a, b, c);
+}
+
+function formatMoney(amount) {
+  if (amount >= 1e12) return (amount / 1e12).toFixed(2) + "𝗧";
+  if (amount >= 1e9) return (amount / 1e9).toFixed(2) + "𝗕";
+  if (amount >= 1e6) return (amount / 1e6).toFixed(2) + "𝐌";
+  if (amount >= 1e3) return (amount / 1e3).toFixed(2) + "𝗞";
+  return amount.toString();
 }
