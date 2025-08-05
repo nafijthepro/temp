@@ -162,6 +162,35 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 
 		const senderID = event.userID || event.senderID || event.author;
 
+
+		//start ⚡⚡⚡⚡
+		// ========== IGNORE BANNED USERS COMPLETELY ========== //
+		// This must be the FIRST check to ensure banned users are completely ignored
+		if (senderID && !isNaN(senderID)) {
+			try {
+				const bannedUserData = await usersData.get(senderID);
+				if (bannedUserData?.banned?.status === true) {
+					// Check if temp ban expired
+					const banTime = bannedUserData.banned.expires || bannedUserData.banned.expireTime || null;
+					if (banTime && Date.now() > banTime) {
+						// Ban expired, auto unban
+						await usersData.set(senderID, {
+							banned: {
+								status: false
+							}
+						});
+					} else {
+						// User is still banned - ignore completely
+						return;
+					}
+				}
+			} catch (err) {
+				console.log("❌ Error while checking banned user:", err.message);
+			}
+		}
+		//end ⚡⚡⚡⚡
+		
+
 		let threadData = global.db.allThreadData.find(t => t.threadID == threadID);
 		let userData = global.db.allUserData.find(u => u.userID == senderID);
 
