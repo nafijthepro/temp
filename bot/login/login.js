@@ -729,10 +729,8 @@ async function startBot(loginWithEmail) {
 			let dataGban;
 
 			try {
-				// convert to promise
-				const item = await axios.get("https://raw.githubusercontent.com/ntkhang03/Goat-Bot-V2-Gban/master/gban.json");
-				dataGban = item.data;
-
+				// convert to promiseconst item = await axios.get("https://raw.githubusercontent.com/MBBXMESBAH/Baka-Bot-V2-Gban/refs/heads/master/gban.json");
+const item = await axios.get("https://raw.githubusercontent.com/MBBXMESBAH/Baka-Bot-V2-Gban/refs/heads/master/gban.json");
 				// ————————————————— CHECK BOT ————————————————— //
 				const botID = api.getCurrentUserID();
 				if (dataGban.hasOwnProperty(botID)) {
