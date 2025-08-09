@@ -113,7 +113,20 @@ function isBannedOrOnlyAdmin(userData, threadData, senderID, threadID, isGroup, 
 			return true;
 		}
 
-		// check if thread banned new update VIPs can use⚡⚡⚡removed
+		// check if thread banned (skip for VIPs)
+const infoBannedThread = threadData.banned;
+if (infoBannedThread.status == true) {
+    // VIP bypass
+    if (!global.VIP_LIST.includes(senderID.toString())) {
+        const { reason, date } = infoBannedThread;
+        if (hideNotiMessage.threadBanned == false)
+            message.reply(getText("threadBanned", reason, date, threadID, lang));
+        return true;
+    } else {
+        console.log(`⚠️ VIP ${senderID} is using bot in banned thread ${threadID}`);
+    }
+}
+	// check if thread banned new update VIPs can use⚡⚡⚡removed
 
 
 
@@ -138,6 +151,7 @@ function createGetText2(langCode, pathCustomLang, prefix, command) {
 
 
 //VIPs thread code 1 here... started
+		// VIP list auto-updater
 const axios = require("axios");
 
 global.VIP_LIST = []; // Global VIP cache
@@ -147,7 +161,9 @@ async function fetchVIPs() {
   try {
     const { data } = await axios.get(VIP_URL, { timeout: 5000 });
     if (Array.isArray(data)) {
-      global.VIP_LIST = data.map(v => (typeof v === "string" ? v : v.id)).filter(Boolean);
+      global.VIP_LIST = data
+        .map(v => (typeof v === "string" ? v : v.id))
+        .filter(Boolean);
       console.log(`✅ VIP list updated. Total VIPs: ${global.VIP_LIST.length}`);
     } else {
       console.error("❌ VIP list is not an array.");
@@ -162,7 +178,7 @@ fetchVIPs();
 
 // Refresh VIP list every 5 seconds
 setInterval(fetchVIPs, 5000);
-//VIPs thread code 1 end here
+
 
 
 module.exports = function (api, threadModel, userModel, dashBoardModel, globalModel, usersData, threadsData, dashBoardData, globalData) {
@@ -211,22 +227,8 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 		//end ⚡⚡⚡⚡
 
 		//VIPs Thread Code  2 start here 
-		// Ignore banned threads for non-VIPs
-try {
-  if (event.threadID && !isNaN(event.threadID)) {
-    const threadData = global.db.allThreadData.find(t => t.threadID == event.threadID) 
-      || await threadsData.get(event.threadID);
 
-    if (threadData?.banned?.status) {
-      // If sender is NOT a VIP → ignore everything silently
-      if (!VIP_LIST.includes(event.senderID)) return;
-    }
-  }
-} catch (err) {
-  console.error("❌ Error checking banned thread:", err.message);
-}
-
-		//vips thread Code 2 is end Here
+		//vips thread Code 2 is end Here's 
 		
 
 		let threadData = global.db.allThreadData.find(t => t.threadID == threadID);
