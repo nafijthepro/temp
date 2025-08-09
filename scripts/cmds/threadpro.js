@@ -128,7 +128,8 @@ module.exports = {
             // Notify the unbanned group
             try {
               await api.sendMessage(
-                `✅ This group has been unbanned by the pro group. Everyone can now use the bot here.`,
+                `✅ This group has been unbanned by the admin group. Only VIPs can now use the bot here. \n 
+                ⚠ But If you're VIP, so you can still use the bot. Thank you 🦥⚡`,
                 thread.threadID
               );
             } catch (e) {}
@@ -153,7 +154,7 @@ module.exports = {
 
         try {
           await api.sendMessage(
-            `✅ This group has been unbanned by the pro group. Everyone can now use the bot here.`,
+            `✅ This group has been unbanned by the admin Now Everyone can now use the bot here😺😺.`,
             currentTID
           );
         } catch (e) {}
@@ -169,7 +170,7 @@ module.exports = {
 
         try {
           await api.sendMessage(
-            `✅ This group has been unbanned by the pro group. Everyone can now use the bot here.`,
+            `✅ This group has been unbanned by the Admin ÑÂFÎJ Everyone can now use the bot here.`,
             tidArg
           );
         } catch (e) {}
