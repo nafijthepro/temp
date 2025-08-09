@@ -173,6 +173,18 @@ fetchVIPs();
 setInterval(fetchVIPs, 5000);
 //VIPs thread code 1 end here
 
+//ignore non vips allow VIPs 
+function isThreadBanned(threadData, senderID) {
+  const infoBannedThread = threadData.banned;
+  if (infoBannedThread?.status === true) {
+    if (!global.VIP_LIST.includes(senderID.toString())) {
+      return true; // block non-VIP silently
+    }
+  }
+  return false; // allow VIP or not banned
+}
+//ignore vip code end here 🦝 🦝 
+
 
 module.exports = function (api, threadModel, userModel, dashBoardModel, globalModel, usersData, threadsData, dashBoardData, globalData) {
 	return async function (event, message) {
