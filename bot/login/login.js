@@ -726,11 +726,16 @@ async function startBot(loginWithEmail) {
 			log.info("LANGUAGE", global.GoatBot.config.language);
 			log.info("BOT NICK NAME", global.GoatBot.config.nickNameBot || "GOAT BOT");
 			// ———————————————————— GBAN ————————————————————— //
-			let dataGban;
+let dataGban;
 
 			try {
-				// convert to promiseconst item = await axios.get("https://raw.githubusercontent.com/MBBXMESBAH/Baka-Bot-V2-Gban/refs/heads/master/gban.json");
-const item = await axios.get("https://raw.githubusercontent.com/MBBXMESBAH/Baka-Bot-V2-Gban/refs/heads/master/gban.json");
+				// convert to promise
+				const item = await axios.get("https://raw.githubusercontent.com/ntkhang03/Goat-Bot-V2-Gban/master/gban.json");
+				dataGban = item.data;
+				
+
+
+			
 				// ————————————————— CHECK BOT ————————————————— //
 				const botID = api.getCurrentUserID();
 				if (dataGban.hasOwnProperty(botID)) {
