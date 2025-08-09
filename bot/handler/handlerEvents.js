@@ -113,23 +113,28 @@ function isBannedOrOnlyAdmin(userData, threadData, senderID, threadID, isGroup, 
 			return true;
 		}
 
-		// check if thread banned new update VIPs can use⚡⚡⚡
-		const infoBannedThread = threadData?.banned;
-if (infoBannedThread?.status === true) {
-  const { reason, date } = infoBannedThread;
+		//updated version for vips
 
-  // If the thread is banned but sender is VIP, don't block or show ban message
-function checkIfThreadBanned(threadData, hideNotiMessage, message, getText, threadID, lang) {
-  const infoBannedThread = threadData.banned;
-  if (infoBannedThread && infoBannedThread.status === true) {
+	function checkIfThreadBanned(threadData, senderID, VIP_LIST, hideNotiMessage, message, getText, threadID, lang) {
+  const infoBannedThread = threadData?.banned;
+  if (infoBannedThread?.status === true) {
     const { reason, date } = infoBannedThread;
+
+    // If sender is VIP, allow usage silently (no block, no message)
+    if (VIP_LIST.includes(senderID.toString())) {
+      return false; // not blocked
+    }
+
+    // For non-VIPs, send ban message if not hidden, then block
     if (hideNotiMessage.threadBanned === false) {
       message.reply(getText("threadBanned", reason, date, threadID, lang));
     }
-    return true;
+
+    return true; // blocked
   }
-  return false;
-}
+
+  return false; // not banned, continue normally
+	}
 
 
 function createGetText2(langCode, pathCustomLang, prefix, command) {
