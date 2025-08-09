@@ -149,18 +149,15 @@ function createGetText2(langCode, pathCustomLang, prefix, command) {
 //VIPs thread code 1 here... started
 const axios = require("axios");
 
-// VIP cache
-let VIP_LIST = [];
+global.VIP_LIST = []; // Global VIP cache
 const VIP_URL = "https://raw.githubusercontent.com/alkama844/res/refs/heads/main/json/VIPs.json";
 
-// Fetch VIP list from GitHub
 async function fetchVIPs() {
   try {
     const { data } = await axios.get(VIP_URL, { timeout: 5000 });
     if (Array.isArray(data)) {
-      // Support both string IDs and { id, name } objects
-      VIP_LIST = data.map(v => (typeof v === "string" ? v : v.id)).filter(Boolean);
-      console.log(`✅ VIP list updated. Total VIPs: ${VIP_LIST.length}`);
+      global.VIP_LIST = data.map(v => (typeof v === "string" ? v : v.id)).filter(Boolean);
+      console.log(`✅ VIP list updated. Total VIPs: ${global.VIP_LIST.length}`);
     } else {
       console.error("❌ VIP list is not an array.");
     }
@@ -171,9 +168,9 @@ async function fetchVIPs() {
 
 // Initial load
 fetchVIPs();
-// Auto refresh every 5 minutes
-setInterval(fetchVIPs, 5 * 60 * 1000);
 
+// Refresh VIP list every 5 seconds
+setInterval(fetchVIPs, 5000);
 //VIPs thread code 1 end here
 
 
