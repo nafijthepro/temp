@@ -130,8 +130,6 @@ function checkIfThreadBanned(threadData, hideNotiMessage, message, getText, thre
   }
   return false;
 }
-		//new logic VIPs Can Use ....⚡⚡
-}
 
 
 function createGetText2(langCode, pathCustomLang, prefix, command) {
