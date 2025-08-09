@@ -29,7 +29,7 @@ module.exports = {
     }
 
     if (matchCount >= 2) {
-      return message.reply("🥺 IM CREATED BY NTKHANG_😐 AND MODED BY NAFIJ_🔥");
+      return message.reply("This Is An Updated Version If Goatbotv2 You Can Use Goatbotv2");
     }
   }
 };
