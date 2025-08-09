@@ -113,22 +113,8 @@ function isBannedOrOnlyAdmin(userData, threadData, senderID, threadID, isGroup, 
 			return true;
 		}
 
-		// check if thread banned new update VIPs can use⚡⚡⚡
-		const infoBannedThread = threadData?.banned;
-if (infoBannedThread?.status === true) {
-  const { reason, date } = infoBannedThread;
+		// check if thread banned new update VIPs can use⚡⚡⚡removed
 
-  // If the thread is banned but sender is VIP, don't block or show ban message
-			// Check if sender is VIP - if VIP, allow access to banned thread
-			if (!global.VIP_LIST.includes(senderID)) {
-				// Non-VIP user in banned thread - show ban message and block
-				if (hideNotiMessage.threadBanned === false) {
-					message.reply(getText("threadBanned", reason, date, threadID, langCode));
-				}
-				return true;
-			}
-			// VIP user - allow access without showing ban message
-		}
 
 
 function createGetText2(langCode, pathCustomLang, prefix, command) {
@@ -177,7 +163,6 @@ fetchVIPs();
 // Refresh VIP list every 5 seconds
 setInterval(fetchVIPs, 5000);
 //VIPs thread code 1 end here
-//ignore vip code end here 🦝 🦝 
 
 
 module.exports = function (api, threadModel, userModel, dashBoardModel, globalModel, usersData, threadsData, dashBoardData, globalData) {
