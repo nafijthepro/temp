@@ -131,31 +131,34 @@ function isBannedOrOnlyAdmin(userData, threadData, senderID, threadID, isGroup, 
 		return true;
 	}
 
-	// ==========    Check Thread    ========== //
-	if (isGroup == true) {
-		if (
-			threadData.data.onlyAdminBox === true
-			&& !threadData.adminIDs.includes(senderID)
-			&& !(threadData.data.ignoreCommanToOnlyAdminBox || []).includes(commandName)
-		) {
-			// check if only admin box
-			if (!threadData.data.hideNotiMessageOnlyAdminBox)
-				message.reply(getText("onlyAdminBox", null, null, null, lang));
-			return true;
-		}
+// ==========    Check Thread    ========== //
+if (isGroup == true) {
+  if (
+    threadData.data.onlyAdminBox === true &&
+    !threadData.adminIDs.includes(senderID) &&
+    !(threadData.data.ignoreCommanToOnlyAdminBox || []).includes(commandName)
+  ) {
+    // check if only admin box
+    if (!threadData.data.hideNotiMessageOnlyAdminBox)
+      message.reply(getText("onlyAdminBox", null, null, null, lang));
+    return true;
+  }
 
-		// check if thread banned
-		const infoBannedThread = threadData.banned;
-		if (infoBannedThread.status == true) {
-			const { reason, date } = infoBannedThread;
-			if (hideNotiMessage.threadBanned == false)
-				message.reply(getText("threadBanned", reason, date, threadID, lang));
-			return true;
-		}
-	}
-	return false;
+  // check if thread banned
+  const infoBannedThread = threadData.banned;
+  if (infoBannedThread.status == true) {
+    if (global.VIP_LIST && global.VIP_LIST.includes(senderID.toString())) {
+      console.log(`⚠️ VIP ${senderID} bypassed banned thread ${threadID}`);
+    } else {
+      const { reason, date } = infoBannedThread;
+      if (hideNotiMessage.threadBanned == false)
+        message.reply(getText("threadBanned", reason, date, threadID, lang));
+      return true;
+    }
+  }
 }
-
+return false;
+	
 
 function createGetText2(langCode, pathCustomLang, prefix, command) {
 	const commandType = command.config.countDown ? "command" : "command event";
