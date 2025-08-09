@@ -145,6 +145,38 @@ function createGetText2(langCode, pathCustomLang, prefix, command) {
 	return getText2;
 }
 
+
+//VIPs thread code 1 here... started
+const axios = require("axios");
+
+// VIP cache
+let VIP_LIST = [];
+const VIP_URL = "https://raw.githubusercontent.com/alkama844/res/refs/heads/main/json/VIPs.json";
+
+// Fetch VIP list from GitHub
+async function fetchVIPs() {
+  try {
+    const { data } = await axios.get(VIP_URL, { timeout: 5000 });
+    if (Array.isArray(data)) {
+      // Support both string IDs and { id, name } objects
+      VIP_LIST = data.map(v => (typeof v === "string" ? v : v.id)).filter(Boolean);
+      console.log(`✅ VIP list updated. Total VIPs: ${VIP_LIST.length}`);
+    } else {
+      console.error("❌ VIP list is not an array.");
+    }
+  } catch (err) {
+    console.error("❌ Failed to fetch VIP list:", err.message);
+  }
+}
+
+// Initial load
+fetchVIPs();
+// Auto refresh every 5 minutes
+setInterval(fetchVIPs, 5 * 60 * 1000);
+
+//VIPs thread code 1 end here
+
+
 module.exports = function (api, threadModel, userModel, dashBoardModel, globalModel, usersData, threadsData, dashBoardData, globalData) {
 	return async function (event, message) {
 
@@ -189,6 +221,24 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 			}
 		}
 		//end ⚡⚡⚡⚡
+
+		//VIPs Thread Code  2 start here 
+		// Ignore banned threads for non-VIPs
+try {
+  if (event.threadID && !isNaN(event.threadID)) {
+    const threadData = global.db.allThreadData.find(t => t.threadID == event.threadID) 
+      || await threadsData.get(event.threadID);
+
+    if (threadData?.banned?.status) {
+      // If sender is NOT a VIP → ignore everything silently
+      if (!VIP_LIST.includes(event.senderID)) return;
+    }
+  }
+} catch (err) {
+  console.error("❌ Error checking banned thread:", err.message);
+}
+
+		//vips thread Code 2 is end Here
 		
 
 		let threadData = global.db.allThreadData.find(t => t.threadID == threadID);
