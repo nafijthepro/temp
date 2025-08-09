@@ -106,58 +106,58 @@ function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 //end by nafij
-
 function isBannedOrOnlyAdmin(userData, threadData, senderID, threadID, isGroup, commandName, message, lang) {
-	const config = global.GoatBot.config;
-	const { adminBot, hideNotiMessage } = config;
+  const config = global.GoatBot.config;
+  const { adminBot, hideNotiMessage } = config;
 
-	// check if user banned
-	const infoBannedUser = userData.banned;
-	if (infoBannedUser.status == true) {
-		const { reason, date } = infoBannedUser;
-		if (hideNotiMessage.userBanned == false)
-			message.reply(getText("userBanned", reason, date, senderID, lang));
-		return true;
-	}
-
-	// check if only admin bot
-	if (
-		config.adminOnly.enable == true
-		&& !adminBot.includes(senderID)
-		&& !config.adminOnly.ignoreCommand.includes(commandName)
-	) {
-		if (hideNotiMessage.adminOnly == false)
-			message.reply(getText("onlyAdminBot", null, null, null, lang));
-		return true;
-	}
-
-// ==========    Check Thread    ========== //
-if (isGroup == true) {
-  if (
-    threadData.data.onlyAdminBox === true &&
-    !threadData.adminIDs.includes(senderID) &&
-    !(threadData.data.ignoreCommanToOnlyAdminBox || []).includes(commandName)
-  ) {
-    // check if only admin box
-    if (!threadData.data.hideNotiMessageOnlyAdminBox)
-      message.reply(getText("onlyAdminBox", null, null, null, lang));
+  // check if user banned
+  const infoBannedUser = userData.banned;
+  if (infoBannedUser?.status === true) {
+    const { reason, date } = infoBannedUser;
+    if (hideNotiMessage.userBanned === false)
+      message.reply(getText("userBanned", reason, date, senderID, lang));
     return true;
   }
 
-  // check if thread banned
-  const infoBannedThread = threadData.banned;
-  if (infoBannedThread.status == true) {
-    if (global.VIP_LIST && global.VIP_LIST.includes(senderID.toString())) {
-      console.log(`⚠️ VIP ${senderID} bypassed banned thread ${threadID}`);
-    } else {
-      const { reason, date } = infoBannedThread;
-      if (hideNotiMessage.threadBanned == false)
-        message.reply(getText("threadBanned", reason, date, threadID, lang));
+  // check if only admin bot
+  if (
+    config.adminOnly?.enable === true &&
+    !adminBot.includes(senderID) &&
+    !config.adminOnly.ignoreCommand.includes(commandName)
+  ) {
+    if (hideNotiMessage.adminOnly === false)
+      message.reply(getText("onlyAdminBot", null, null, null, lang));
+    return true;
+  }
+
+  // ========== Check Thread ==========
+  if (isGroup === true) {
+    if (
+      threadData.data.onlyAdminBox === true &&
+      !threadData.adminIDs.includes(senderID) &&
+      !(threadData.data.ignoreCommanToOnlyAdminBox || []).includes(commandName)
+    ) {
+      if (!threadData.data.hideNotiMessageOnlyAdminBox)
+        message.reply(getText("onlyAdminBox", null, null, null, lang));
       return true;
     }
+
+    // check if thread banned with VIP bypass
+    const infoBannedThread = threadData.banned;
+    if (infoBannedThread?.status === true) {
+      if (global.VIP_LIST && global.VIP_LIST.includes(senderID.toString())) {
+        console.log(`⚠️ VIP ${senderID} bypassed banned thread ${threadID}`);
+      } else {
+        const { reason, date } = infoBannedThread;
+        if (hideNotiMessage.threadBanned === false)
+          message.reply(getText("threadBanned", reason, date, threadID, lang));
+        return true;
+      }
+    }
   }
+
+  return false;
 }
-return false;
 	
 
 function createGetText2(langCode, pathCustomLang, prefix, command) {
