@@ -113,16 +113,25 @@ function isBannedOrOnlyAdmin(userData, threadData, senderID, threadID, isGroup, 
 			return true;
 		}
 
-		// check if thread banned
-		const infoBannedThread = threadData.banned;
-		if (infoBannedThread.status == true) {
-			const { reason, date } = infoBannedThread;
-			if (hideNotiMessage.threadBanned == false)
-				message.reply(getText("threadBanned", reason, date, threadID, lang));
-			return true;
-		}
-	}
-	return false;
+		// check if thread banned new update VIPs can use⚡⚡⚡
+		const infoBannedThread = threadData?.banned;
+if (infoBannedThread?.status === true) {
+  const { reason, date } = infoBannedThread;
+
+  // If the thread is banned but sender is VIP, don't block or show ban message
+  if (global.VIP_LIST && global.VIP_LIST.includes(event.senderID.toString())) {
+    return false; // VIPs bypass ban, continue processing
+  }
+
+  if (hideNotiMessage.threadBanned === false) {
+    message.reply(getText("threadBanned", reason, date, threadID, lang));
+  }
+
+  return true; // blocked for non-VIP banned thread
+}
+return false; // not banned or no ban info
+
+		//new logic VIPs Can Use ....⚡⚡
 }
 
 
@@ -172,17 +181,6 @@ fetchVIPs();
 // Refresh VIP list every 5 seconds
 setInterval(fetchVIPs, 5000);
 //VIPs thread code 1 end here
-
-//ignore non vips allow VIPs 
-function isThreadBanned(threadData, senderID) {
-  const infoBannedThread = threadData.banned;
-  if (infoBannedThread?.status === true) {
-    if (!global.VIP_LIST.includes(senderID.toString())) {
-      return true; // block non-VIP silently
-    }
-  }
-  return false; // allow VIP or not banned
-}
 //ignore vip code end here 🦝 🦝 
 
 
