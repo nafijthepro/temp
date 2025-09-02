@@ -245,6 +245,8 @@ app.use((req, res, next) => {
 
 		const totalThread = (await threadsData.getAll()).filter(t => t.threadID.toString().length > 15).length;
 		const totalUser = (await usersData.getAll()).length;
+		const totalMessages = (await threadsData.getAll()).reduce((sum, t) => 
+			sum + (t.members?.reduce((memberSum, m) => memberSum + (m.count || 0), 0) || 0), 0);
 		const prefix = config.prefix;
 		const uptime = utils.convertTime(process.uptime() * 1000);
 
@@ -252,6 +254,7 @@ app.use((req, res, next) => {
 			fcaVersion,
 			totalThread,
 			totalUser,
+			totalMessages,
 			prefix,
 			uptime,
 			uptimeSecond: process.uptime()
@@ -274,23 +277,53 @@ app.use((req, res, next) => {
 		});
 	});
 
+	// Enhanced 2025 Features
+	app.get("/admin/overview", [isAuthenticated, isVeryfiUserIDFacebook, function(req, res, next) {
+		if (!global.GoatBot.config.adminBot.includes(req.user.facebookUserID)) {
+			req.flash("errors", { msg: "Admin access required" });
+			return res.redirect("/dashboard");
+		}
+		next();
+	}], async (req, res) => {
+		const allThreads = await threadsData.getAll();
+		const allUsers = await usersData.getAll();
+		
+		const stats = {
+			totalThreads: allThreads.length,
+			totalUsers: allUsers.length,
+			totalMessages: allThreads.reduce((sum, t) => 
+				sum + (t.members?.reduce((memberSum, m) => memberSum + (m.count || 0), 0) || 0), 0),
+			activeThreads: allThreads.filter(t => 
+				t.members?.some(m => m.inGroup && (m.count || 0) > 0)).length,
+			topThreads: allThreads
+				.map(t => ({
+					...t,
+					totalMessages: t.members?.reduce((sum, m) => sum + (m.count || 0), 0) || 0,
+					activeMembers: t.members?.filter(m => m.inGroup).length || 0
+				}))
+				.sort((a, b) => b.totalMessages - a.totalMessages)
+				.slice(0, 10)
+		};
+		
+		res.render("admin-overview", { stats });
+	});
 	app.post("/changefbstate", isAuthenticated, isVeryfiUserIDFacebook, (req, res) => {
 		if (!global.GoatBot.config.adminBot.includes(req.user.facebookUserID))
 			return res.send({
 				status: "error",
-				message: getText("app", "notPermissionChangeFbstate")
+				message: "You don't have permission to change fbstate"
 			});
 		const { fbstate } = req.body;
 		if (!fbstate)
 			return res.send({
 				status: "error",
-				message: getText("app", "notFoundFbstate")
+				message: "Please provide fbstate"
 			});
 
 		fs.writeFileSync(process.cwd() + (process.env.NODE_ENV == "production" || process.env.NODE_ENV == "development" ? "/account.dev.txt" : "/account.txt"), fbstate);
 		res.send({
 			status: "success",
-			message: getText("app", "changedFbstateSuccess")
+			message: "Successfully changed fbstate"
 		});
 
 		res.on("finish", () => {

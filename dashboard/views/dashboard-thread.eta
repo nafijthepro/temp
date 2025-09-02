@@ -12,17 +12,52 @@
 
 <form id="setData" class="container">
   <br>
+	<!-- Enhanced Thread Info Card -->
 	<div class="bg-300 rounded-5 py-4">
-		<h5 class="text-center">Box Name: <%= threadData.threadName %></h5>
-		<p class="mt-2 mb-0 text-center">Box ID: <%= threadData.threadID %></p>
+		<div class="text-center">
+			<h4 class="mb-2">📱 <%= threadData.threadName || "Unnamed Group" %></h4>
+			<p class="text-muted mb-2">🆔 ID: <%= threadData.threadID %></p>
+			<div class="row justify-content-center">
+				<div class="col-auto">
+					<small class="badge bg-primary">👥 <%= threadData.members.filter(m => m.inGroup).length %> Members</small>
+				</div>
+				<div class="col-auto">
+					<small class="badge bg-info">💬 <%= threadData.members.reduce((sum, m) => sum + (m.count || 0), 0) %> Messages</small>
+				</div>
+				<div class="col-auto">
+					<small class="badge bg-success">⚡ <%= threadData.isGroup ? 'Group' : 'Private' %></small>
+				</div>
+			</div>
+		</div>
 	</div>
 
 	<hr>
 
+	<!-- Quick Actions Bar -->
+	<div class="row mb-3">
+		<div class="col-md-6">
+			<button type="button" class="btn btn-outline-primary btn-sm me-2" onclick="loadThreadStats()">
+				📊 View Statistics
+			</button>
+			<button type="button" class="btn btn-outline-info btn-sm me-2" onclick="exportThreadData()">
+				📥 Export Data
+			</button>
+		</div>
+		<div class="col-md-6 text-end">
+			<button type="button" class="btn btn-outline-warning btn-sm me-2" onclick="refreshThreadInfo()">
+				🔄 Refresh Info
+			</button>
+			<button type="button" class="btn btn-outline-danger btn-sm" onclick="confirmLeaveGroup()">
+				🚪 Leave Group
+			</button>
+		</div>
+	</div>
+
+	<!-- Feature Cards -->
 	<div class="bg-300 rounded-5 py-4 px-4 mt-2" role="button" onclick="window.location.href='/dashboard/<%= threadID %>/welcome'">
 		<div class="row justify-content-between">
 			<div class="col-auto">
-				<h4>👋 Welcome</h4>
+				<h4>👋 Welcome Messages</h4>
 			</div>
 			<div class="col-auto">
 				<label class="switch">
@@ -33,13 +68,13 @@
 				</label>
 			</div>
 		</div>
-		<p class="text-700 lead fs-1 ms-2 mb-0">Send a welcome message to new members!</p>
+		<p class="text-700 lead fs-1 ms-2 mb-0">🎉 Automatically greet new members with custom messages and attachments</p>
 	</div>
 
 	<div class="bg-300 rounded-5 py-4 px-4 mt-2" role="button" onclick="window.location.href='/dashboard/<%= threadID %>/leave'">
 		<div class="row justify-content-between">
 			<div class="col-auto">
-				<h4>🤧 Leave</h4>
+				<h4>👋 Goodbye Messages</h4>
 			</div>
 			<div class="col-auto">
 				<label class="switch">
@@ -50,13 +85,13 @@
 				</label>
 			</div>
 		</div>
-		<p class="text-700 lead fs-1 ms-2 mb-0">Send a goodbye message when members leave the group!</p>
+		<p class="text-700 lead fs-1 ms-2 mb-0">😢 Send farewell messages when members leave or are removed</p>
 	</div>
 
 	<div class="bg-300 rounded-5 py-4 px-4 mt-2" role="button" onclick="window.location.href='/dashboard/<%= threadID %>/rankup'">
 		<div class="row justify-content-between">
 			<div class="col-auto">
-				<h4>🏆 Rankup</h4>
+				<h4>🏆 Level System</h4>
 			</div>
 			<div class="col-auto">
 				<label class="switch">
@@ -67,13 +102,13 @@
 				</label>
 			</div>
 		</div>
-		<p class="text-700 lead fs-1 ms-2 mb-0">Send notifications for rank upgrades!</p>
+		<p class="text-700 lead fs-1 ms-2 mb-0">🎮 Gamify your group with experience points and level notifications</p>
 	</div>
 
 	<div class="bg-300 rounded-5 py-4 px-4 mt-2" role="button" onclick="window.location.href='/dashboard/<%= threadID %>/custom-cmd'">
 		<div class="row justify-content-between">
 			<div class="col-auto">
-				<h4>⚙️ Custom command</h4>
+				<h4>⚙️ Custom Commands</h4>
 			</div>
 			<div class="col-auto">
 				<label class="switch">
@@ -84,23 +119,78 @@
 				</label>
 			</div>
 		</div>
-		<p class="text-700 lead fs-1 ms-2 mb-0">Customize bot commands!</p>
+		<p class="text-700 lead fs-1 ms-2 mb-0">🛠️ Create and manage custom commands for your group</p>
 	</div>
 
-<div class="bg-300 rounded-5 py-4 px-4 mt-4" id="leave-group-btn" role="button" style="cursor:pointer;">
-  <div class="row justify-content-between">
-    <div class="col-auto">
-      <h4>😥 Leave Group</h4>
-    </div>
-  </div>
-  <p class="text-700 lead fs-1 ms-2 mb-0">Click here to make the bot leave this group.</p>
-</div>
+	<!-- New 2025 Features -->
+	<div class="bg-300 rounded-5 py-4 px-4 mt-2" role="button" onclick="window.location.href='/dashboard/<%= threadID %>/moderation'">
+		<div class="row justify-content-between">
+			<div class="col-auto">
+				<h4>🛡️ Moderation Tools</h4>
+			</div>
+			<div class="col-auto">
+				<span class="badge bg-warning">NEW 2025</span>
+			</div>
+		</div>
+		<p class="text-700 lead fs-1 ms-2 mb-0">🚫 Advanced moderation with auto-kick, word filters, and spam protection</p>
+	</div>
+
+	<div class="bg-300 rounded-5 py-4 px-4 mt-2" role="button" onclick="window.location.href='/dashboard/<%= threadID %>/analytics'">
+		<div class="row justify-content-between">
+			<div class="col-auto">
+				<h4>📈 Analytics Dashboard</h4>
+			</div>
+			<div class="col-auto">
+				<span class="badge bg-success">NEW 2025</span>
+			</div>
+		</div>
+		<p class="text-700 lead fs-1 ms-2 mb-0">📊 Detailed insights about group activity, member engagement, and trends</p>
+	</div>
+
+	<!-- Danger Zone -->
+	<div class="bg-danger rounded-5 py-4 px-4 mt-4" style="--phoenix-bg-opacity: 0.1; border: 1px solid rgba(220, 53, 69, 0.3);">
+		<h5 class="text-danger mb-3">⚠️ Danger Zone</h5>
+		<div class="row">
+			<div class="col-md-6 mb-2">
+				<button type="button" class="btn btn-outline-danger btn-sm w-100" onclick="confirmLeaveGroup()">
+					🚪 Make Bot Leave Group
+				</button>
+			</div>
+			<div class="col-md-6 mb-2">
+				<button type="button" class="btn btn-outline-warning btn-sm w-100" onclick="resetGroupSettings()">
+					🔄 Reset All Settings
+				</button>
+			</div>
+		</div>
+		<small class="text-muted">These actions cannot be undone. Use with caution.</small>
+	</div>
 
 
 	<input type="hidden" name="threadID" value="<%= threadID %>">
-	<button type="submit" id="save" class="mt-2 btn btn-primary btn-block" <%=authConfigDashboard ? '' : 'disabled'%>>Save</button>
+	<button type="submit" id="save" class="mt-4 btn btn-primary btn-lg w-100" <%=authConfigDashboard ? '' : 'disabled'%>>
+		💾 Save All Settings
+	</button>
 
 </form>
+
+<!-- Statistics Modal -->
+<div class="modal fade" id="statsModal" tabindex="-1" aria-hidden="true">
+	<div class="modal-dialog modal-lg">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title">📊 Group Statistics</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+			</div>
+			<div class="modal-body" id="statsContent">
+				<div class="text-center">
+					<div class="spinner-border" role="status">
+						<span class="visually-hidden">Loading...</span>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
 
 <script type="text/javascript">
   (function() {
@@ -124,14 +214,14 @@
           $.createToast({
             title: "Success",
             type: "success",
-            message: "Updated successfully!"
+            message: "Settings updated successfully!"
           });
         },
         error: function(err) {
           $.createToast({
             title: "Error",
             type: "error",
-            message: "An error occurred!"
+            message: "An error occurred while saving settings!"
           });
         }
       });
@@ -149,10 +239,9 @@
       e.stopPropagation();
     });
 
-    // Leave Group button event
-    document.getElementById("leave-group-btn").addEventListener("click", function(e) {
-      e.preventDefault();
-      if (confirm("Are you sure you want the bot to leave this group?")) {
+    // Enhanced Leave Group function
+    window.confirmLeaveGroup = function() {
+      if (confirm("⚠️ Are you sure you want the bot to leave this group?\n\nThis action cannot be undone and the bot will lose access to this group permanently.")) {
         $.ajax({
           url: "/api/thread/leave-group",
           method: "POST",
@@ -161,22 +250,156 @@
             $.createToast({
               title: "Success",
               type: "success",
-              message: "The bot has left the group."
+              message: "Bot is leaving the group..."
             });
             setTimeout(() => {
               window.location.href = "/dashboard";
-            }, 1500);
+            }, 2000);
           },
           error: function(err) {
             $.createToast({
               title: "Error",
               type: "error",
-              message: "Failed to leave the group."
+              message: err.responseJSON?.message || "Failed to leave the group."
             });
           }
         });
       }
-    });
+    };
+
+    // Load Thread Statistics
+    window.loadThreadStats = function() {
+      $("#statsModal").modal("show");
+      $.ajax({
+        url: "/api/thread/stats/<%= threadID %>",
+        method: "GET",
+        success: function(response) {
+          const stats = response.data;
+          const content = `
+            <div class="row">
+              <div class="col-md-6">
+                <h6>👥 Member Statistics</h6>
+                <ul class="list-unstyled">
+                  <li>Total Members: <strong>${stats.totalMembers}</strong></li>
+                  <li>Active Members: <strong>${stats.activeMembers}</strong></li>
+                  <li>Male: <strong>${stats.genderDistribution.male}</strong></li>
+                  <li>Female: <strong>${stats.genderDistribution.female}</strong></li>
+                </ul>
+              </div>
+              <div class="col-md-6">
+                <h6>💬 Activity Statistics</h6>
+                <ul class="list-unstyled">
+                  <li>Total Messages: <strong>${stats.totalMessages.toLocaleString()}</strong></li>
+                  <li>Average per Member: <strong>${stats.averageMessages}</strong></li>
+                  <li>Most Active: <strong>${stats.mostActiveUser?.name || 'N/A'}</strong></li>
+                  <li>Their Messages: <strong>${stats.mostActiveUser?.messageCount || 0}</strong></li>
+                </ul>
+              </div>
+            </div>
+            <hr>
+            <div class="row">
+              <div class="col-12">
+                <h6>⚙️ Current Settings</h6>
+                <div class="row">
+                  <div class="col-6">
+                    <span class="badge ${stats.settings.sendWelcomeMessage ? 'bg-success' : 'bg-secondary'}">
+                      Welcome: ${stats.settings.sendWelcomeMessage ? 'ON' : 'OFF'}
+                    </span>
+                  </div>
+                  <div class="col-6">
+                    <span class="badge ${stats.settings.sendLeaveMessage ? 'bg-success' : 'bg-secondary'}">
+                      Leave: ${stats.settings.sendLeaveMessage ? 'ON' : 'OFF'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+          $("#statsContent").html(content);
+        },
+        error: function(err) {
+          $("#statsContent").html(`
+            <div class="alert alert-danger">
+              <i class="fas fa-exclamation-triangle"></i>
+              Failed to load statistics: ${err.responseJSON?.message || 'Unknown error'}
+            </div>
+          `);
+        }
+      });
+    };
+
+    // Export Thread Data
+    window.exportThreadData = function() {
+      $.createToast({
+        title: "Info",
+        type: "info",
+        message: "Preparing data export..."
+      });
+      
+      // Create downloadable JSON
+      const threadData = <%- JSON.stringify(threadData) %>;
+      const dataStr = JSON.stringify(threadData, null, 2);
+      const dataBlob = new Blob([dataStr], {type: 'application/json'});
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `thread_${threadData.threadID}_export_${new Date().toISOString().split('T')[0]}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+      
+      $.createToast({
+        title: "Success",
+        type: "success",
+        message: "Thread data exported successfully!"
+      });
+    };
+
+    // Refresh Thread Info
+    window.refreshThreadInfo = function() {
+      $.createToast({
+        title: "Info",
+        type: "info",
+        message: "Refreshing thread information..."
+      });
+      
+      setTimeout(() => {
+        location.reload();
+      }, 1000);
+    };
+
+    // Reset Group Settings
+    window.resetGroupSettings = function() {
+      if (confirm("⚠️ Are you sure you want to reset ALL group settings to default?\n\nThis will:\n- Turn OFF all features\n- Clear custom messages\n- Remove all attachments\n\nThis action cannot be undone!")) {
+        $.ajax({
+          url: "/api/thread/setData/settings",
+          type: "POST",
+          data: {
+            threadID: "<%= threadID %>",
+            updateData: {
+              sendWelcomeMessage: false,
+              sendLeaveMessage: false,
+              sendRankupMessage: false,
+              customCommand: false
+            }
+          },
+          success: function(data) {
+            $.createToast({
+              title: "Success",
+              type: "success",
+              message: "All settings have been reset to default!"
+            });
+            setTimeout(() => location.reload(), 1500);
+          },
+          error: function(err) {
+            $.createToast({
+              title: "Error",
+              type: "error",
+              message: "Failed to reset settings!"
+            });
+          }
+        });
+      }
+    };
   })();
 </script>
 <%~ includeFile("partials/footer.eta") %>

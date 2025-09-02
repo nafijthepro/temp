@@ -24,6 +24,12 @@
           </td>
         </tr>
         <tr class="text-start">
+          <td><i class="fas fa-comments"></i> Total Messages</td>
+          <td>
+            <%= totalMessages.toLocaleString() %>
+          </td>
+        </tr>
+        <tr class="text-start">
           <td><i class="fas fa-hashtag"></i> Prefix</td>
           <td>
             <%= prefix %>
@@ -57,6 +63,12 @@
 					<td style="font-size: 15px;"><i class="fa-solid fa-microchip"></i> Node CPU</td>
 					<td style="font-size: 15px;">
 						<%= (process.cpuUsage().user / 1024 / 1024).toFixed(2) %>%
+					</td>
+				</tr>
+				<tr class="text-start">
+					<td><i class="fa-solid fa-calendar"></i> Bot Version</td>
+					<td>
+						GoatBot V2 - 2025 Enhanced
 					</td>
 				</tr>
 			</tbody>

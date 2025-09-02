@@ -13,7 +13,7 @@ module.exports = function ({ isAuthenticated, isVeryfiUserIDFacebook, checkHasAn
 			let authConfigDashboard = true;
 			const warnings = [];
 			if (!checkAuthConfigDashboardOfThread(threadData, req.user.facebookUserID)) {
-				warnings.push({ msg: "[!] Chỉ quản trị viên của nhóm chat hoặc những thành viên được cho phép mới có thể chỉnh sửa dashboard" });
+				warnings.push({ msg: "[!] Only group chat administrators or authorized members can edit the dashboard" });
 				authConfigDashboard = false;
 			}
 			delete req.threadData;
@@ -37,7 +37,8 @@ module.exports = function ({ isAuthenticated, isVeryfiUserIDFacebook, checkHasAn
 				videoExt,
 				audioExt,
 				convertSize,
-				isVideoFile
+				isVideoFile,
+				authConfigDashboard: checkAuthConfigDashboardOfThread(threadData, req.user.facebookUserID)
 			};
 			let renderFile;
 
@@ -91,6 +92,14 @@ module.exports = function ({ isAuthenticated, isVeryfiUserIDFacebook, checkHasAn
 				}
 				case "custom-cmd": {
 					renderFile = "dashboard-custom-cmd";
+					break;
+				}
+				case "analytics": {
+					renderFile = "dashboard-analytics";
+					break;
+				}
+				case "moderation": {
+					renderFile = "dashboard-moderation";
 					break;
 				}
 				default: {

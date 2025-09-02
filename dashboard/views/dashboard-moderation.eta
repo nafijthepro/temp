@@ -1,0 +1,271 @@
+<%~ includeFile("partials/header.eta", {
+	user: user
+}); %>
+<%~ includeFile("partials/message.eta"); %>
+<%~ includeFile("partials/title.eta", {
+	icon: "fas fa-shield-alt",
+	title: "Moderation Tools"
+}); %>
+
+<style>
+  .moderation-card {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+    border-radius: 15px;
+    padding: 20px;
+    color: white;
+    margin-bottom: 20px;
+  }
+  .feature-card {
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 15px;
+    transition: all 0.3s ease;
+  }
+  .feature-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  }
+</style>
+
+<div class="container">
+  <div class="d-flex align-items-center mb-4">
+    <h3 class="mb-0">🛡️ Moderation Tools - <%= threadData.threadName %></h3>
+    <span class="badge bg-danger ms-3">NEW 2025</span>
+  </div>
+
+  <!-- Warning Banner -->
+  <div class="moderation-card">
+    <h5 class="mb-3">⚠️ Advanced Moderation System</h5>
+    <p class="mb-0">These tools help you maintain a healthy and safe environment in your group. Use responsibly and ensure bot has admin permissions for full functionality.</p>
+  </div>
+
+  <!-- Auto-Kick Settings -->
+  <div class="feature-card">
+    <div class="row justify-content-between align-items-center">
+      <div class="col-md-8">
+        <h5>🚫 Auto-Kick System</h5>
+        <p class="text-muted mb-0">Automatically remove members who violate rules multiple times</p>
+      </div>
+      <div class="col-md-4 text-end">
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="autoKickEnabled" 
+                 <%= threadData.data?.moderation?.autoKick?.enabled ? 'checked' : '' %>>
+          <label class="form-check-label" for="autoKickEnabled">Enable</label>
+        </div>
+      </div>
+    </div>
+    
+    <div class="mt-3" id="autoKickSettings" style="<%= threadData.data?.moderation?.autoKick?.enabled ? '' : 'display: none;' %>">
+      <div class="row">
+        <div class="col-md-6">
+          <label class="form-label">Warnings before kick:</label>
+          <select class="form-select" id="warningLimit">
+            <option value="2" <%= (threadData.data?.moderation?.autoKick?.warningLimit || 3) == 2 ? 'selected' : '' %>>2 warnings</option>
+            <option value="3" <%= (threadData.data?.moderation?.autoKick?.warningLimit || 3) == 3 ? 'selected' : '' %>>3 warnings</option>
+            <option value="5" <%= (threadData.data?.moderation?.autoKick?.warningLimit || 3) == 5 ? 'selected' : '' %>>5 warnings</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Reset warnings after:</label>
+          <select class="form-select" id="resetPeriod">
+            <option value="7" <%= (threadData.data?.moderation?.autoKick?.resetDays || 30) == 7 ? 'selected' : '' %>>7 days</option>
+            <option value="30" <%= (threadData.data?.moderation?.autoKick?.resetDays || 30) == 30 ? 'selected' : '' %>>30 days</option>
+            <option value="90" <%= (threadData.data?.moderation?.autoKick?.resetDays || 30) == 90 ? 'selected' : '' %>>90 days</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Word Filter -->
+  <div class="feature-card">
+    <div class="row justify-content-between align-items-center">
+      <div class="col-md-8">
+        <h5>🔤 Smart Word Filter</h5>
+        <p class="text-muted mb-0">Block inappropriate content with AI-powered detection</p>
+      </div>
+      <div class="col-md-4 text-end">
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="wordFilterEnabled"
+                 <%= threadData.data?.moderation?.wordFilter?.enabled ? 'checked' : '' %>>
+          <label class="form-check-label" for="wordFilterEnabled">Enable</label>
+        </div>
+      </div>
+    </div>
+    
+    <div class="mt-3" id="wordFilterSettings" style="<%= threadData.data?.moderation?.wordFilter?.enabled ? '' : 'display: none;' %>">
+      <label class="form-label">Blocked Words (one per line):</label>
+      <textarea class="form-control" rows="4" id="blockedWords" placeholder="Enter words to block..."><%= (threadData.data?.moderation?.wordFilter?.words || []).join('\n') %></textarea>
+      <div class="form-check mt-2">
+        <input class="form-check-input" type="checkbox" id="strictMode" 
+               <%= threadData.data?.moderation?.wordFilter?.strictMode ? 'checked' : '' %>>
+        <label class="form-check-label" for="strictMode">
+          Strict Mode (block partial matches)
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Spam Protection -->
+  <div class="feature-card">
+    <div class="row justify-content-between align-items-center">
+      <div class="col-md-8">
+        <h5>🚀 Anti-Spam Protection</h5>
+        <p class="text-muted mb-0">Prevent spam messages and rapid posting</p>
+      </div>
+      <div class="col-md-4 text-end">
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="antiSpamEnabled"
+                 <%= threadData.data?.moderation?.antiSpam?.enabled ? 'checked' : '' %>>
+          <label class="form-check-label" for="antiSpamEnabled">Enable</label>
+        </div>
+      </div>
+    </div>
+    
+    <div class="mt-3" id="antiSpamSettings" style="<%= threadData.data?.moderation?.antiSpam?.enabled ? '' : 'display: none;' %>">
+      <div class="row">
+        <div class="col-md-6">
+          <label class="form-label">Max messages per minute:</label>
+          <input type="number" class="form-control" id="messageLimit" min="1" max="20" 
+                 value="<%= threadData.data?.moderation?.antiSpam?.messageLimit || 5 %>">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Timeout duration (minutes):</label>
+          <input type="number" class="form-control" id="timeoutDuration" min="1" max="60" 
+                 value="<%= threadData.data?.moderation?.antiSpam?.timeoutMinutes || 5 %>">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Link Protection -->
+  <div class="feature-card">
+    <div class="row justify-content-between align-items-center">
+      <div class="col-md-8">
+        <h5>🔗 Link Protection</h5>
+        <p class="text-muted mb-0">Control link sharing and prevent malicious URLs</p>
+      </div>
+      <div class="col-md-4 text-end">
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="linkProtectionEnabled"
+                 <%= threadData.data?.moderation?.linkProtection?.enabled ? 'checked' : '' %>>
+          <label class="form-check-label" for="linkProtectionEnabled">Enable</label>
+        </div>
+      </div>
+    </div>
+    
+    <div class="mt-3" id="linkProtectionSettings" style="<%= threadData.data?.moderation?.linkProtection?.enabled ? '' : 'display: none;' %>">
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="linkAction" id="linkWarn" value="warn"
+                   <%= (threadData.data?.moderation?.linkProtection?.action || 'warn') === 'warn' ? 'checked' : '' %>>
+            <label class="form-check-label" for="linkWarn">Warn only</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="linkAction" id="linkDelete" value="delete"
+                   <%= (threadData.data?.moderation?.linkProtection?.action || 'warn') === 'delete' ? 'checked' : '' %>>
+            <label class="form-check-label" for="linkDelete">Delete message</label>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Allowed domains (optional):</label>
+          <textarea class="form-control" rows="3" id="allowedDomains" placeholder="youtube.com&#10;facebook.com"><%= (threadData.data?.moderation?.linkProtection?.allowedDomains || []).join('\n') %></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Save Button -->
+  <div class="text-center mt-4">
+    <button type="button" class="btn btn-primary btn-lg" onclick="saveModerationSettings()" <%=authConfigDashboard ? '' : 'disabled'%>>
+      💾 Save Moderation Settings
+    </button>
+  </div>
+
+  <!-- Back Button -->
+  <div class="text-center mt-3">
+    <a href="/dashboard/<%= threadID %>" class="btn btn-outline-secondary">
+      <i class="fas fa-arrow-left"></i> Back to Dashboard
+    </a>
+  </div>
+</div>
+
+<script>
+  // Toggle settings visibility
+  $('#autoKickEnabled').change(function() {
+    $('#autoKickSettings').toggle(this.checked);
+  });
+  
+  $('#wordFilterEnabled').change(function() {
+    $('#wordFilterSettings').toggle(this.checked);
+  });
+  
+  $('#antiSpamEnabled').change(function() {
+    $('#antiSpamSettings').toggle(this.checked);
+  });
+  
+  $('#linkProtectionEnabled').change(function() {
+    $('#linkProtectionSettings').toggle(this.checked);
+  });
+
+  // Save moderation settings
+  function saveModerationSettings() {
+    <% if (authConfigDashboard) { %>
+    const settings = {
+      autoKick: {
+        enabled: $('#autoKickEnabled').is(':checked'),
+        warningLimit: parseInt($('#warningLimit').val()),
+        resetDays: parseInt($('#resetPeriod').val())
+      },
+      wordFilter: {
+        enabled: $('#wordFilterEnabled').is(':checked'),
+        words: $('#blockedWords').val().split('\n').filter(w => w.trim()),
+        strictMode: $('#strictMode').is(':checked')
+      },
+      antiSpam: {
+        enabled: $('#antiSpamEnabled').is(':checked'),
+        messageLimit: parseInt($('#messageLimit').val()),
+        timeoutMinutes: parseInt($('#timeoutDuration').val())
+      },
+      linkProtection: {
+        enabled: $('#linkProtectionEnabled').is(':checked'),
+        action: $('input[name="linkAction"]:checked').val(),
+        allowedDomains: $('#allowedDomains').val().split('\n').filter(d => d.trim())
+      }
+    };
+
+    $.ajax({
+      url: "/api/thread/setData/moderation",
+      type: "POST",
+      data: {
+        threadID: "<%= threadID %>",
+        moderationSettings: settings
+      },
+      success: function(data) {
+        $.createToast({
+          title: "Success",
+          type: "success",
+          message: "Moderation settings saved successfully!"
+        });
+      },
+      error: function(err) {
+        $.createToast({
+          title: "Error",
+          type: "error",
+          message: "Failed to save moderation settings!"
+        });
+      }
+    });
+    <% } else { %>
+    $.createToast({
+      title: "Warning",
+      message: "Only group admins can modify moderation settings",
+      type: "warning"
+    });
+    <% } %>
+  }
+</script>
+
+<%~ includeFile("partials/footer.eta") %>

@@ -1,0 +1,230 @@
+<%~ includeFile("partials/header.eta", {
+	user: user
+}); %>
+<%~ includeFile("partials/message.eta"); %>
+<%~ includeFile("partials/title.eta", {
+	icon: "fas fa-chart-line",
+	title: "Analytics Dashboard"
+}); %>
+
+<style>
+  .stat-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 15px;
+    padding: 20px;
+    color: white;
+    margin-bottom: 20px;
+    transition: transform 0.3s ease;
+  }
+  .stat-card:hover {
+    transform: translateY(-5px);
+  }
+  .chart-container {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+  }
+</style>
+
+<div class="container">
+  <div class="d-flex align-items-center mb-4">
+    <h3 class="mb-0">📊 Analytics Dashboard - <%= threadData.threadName %></h3>
+    <span class="badge bg-success ms-3">NEW 2025</span>
+  </div>
+
+  <!-- Key Statistics Cards -->
+  <div class="row">
+    <div class="col-md-3">
+      <div class="stat-card text-center">
+        <h2 class="mb-1"><%= threadData.members.filter(m => m.inGroup).length %></h2>
+        <p class="mb-0">👥 Active Members</p>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stat-card text-center">
+        <h2 class="mb-1"><%= threadData.members.reduce((sum, m) => sum + (m.count || 0), 0).toLocaleString() %></h2>
+        <p class="mb-0">💬 Total Messages</p>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stat-card text-center">
+        <h2 class="mb-1"><%= Math.round(threadData.members.reduce((sum, m) => sum + (m.count || 0), 0) / threadData.members.filter(m => m.inGroup).length) || 0 %></h2>
+        <p class="mb-0">📈 Avg Messages/Member</p>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stat-card text-center">
+        <h2 class="mb-1"><%= threadData.adminIDs.length %></h2>
+        <p class="mb-0">👑 Administrators</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Activity Chart -->
+  <div class="chart-container">
+    <h5 class="mb-3">📈 Member Activity Distribution</h5>
+    <canvas id="activityChart" width="400" height="200"></canvas>
+  </div>
+
+  <!-- Top Members Table -->
+  <div class="chart-container">
+    <h5 class="mb-3">🏆 Most Active Members</h5>
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Member</th>
+            <th>Messages</th>
+            <th>Percentage</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% 
+          const sortedMembers = threadData.members
+            .filter(m => m.inGroup && m.count > 0)
+            .sort((a, b) => (b.count || 0) - (a.count || 0))
+            .slice(0, 10);
+          const totalMessages = threadData.members.reduce((sum, m) => sum + (m.count || 0), 0);
+          %>
+          <% for (let i = 0; i < sortedMembers.length; i++) { %>
+          <% const member = sortedMembers[i]; %>
+          <% const percentage = totalMessages > 0 ? ((member.count / totalMessages) * 100).toFixed(1) : 0; %>
+          <tr>
+            <td>
+              <% if (i === 0) { %>
+                🥇
+              <% } else if (i === 1) { %>
+                🥈
+              <% } else if (i === 2) { %>
+                🥉
+              <% } else { %>
+                <%= i + 1 %>
+              <% } %>
+            </td>
+            <td>
+              <strong><%= member.name %></strong>
+              <% if (threadData.adminIDs.includes(member.userID)) { %>
+                <span class="badge bg-warning ms-1">Admin</span>
+              <% } %>
+            </td>
+            <td><%= (member.count || 0).toLocaleString() %></td>
+            <td>
+              <div class="progress" style="height: 20px;">
+                <div class="progress-bar" role="progressbar" style="width: <%= percentage %>%">
+                  <%= percentage %>%
+                </div>
+              </div>
+            </td>
+          </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Settings Overview -->
+  <div class="chart-container">
+    <h5 class="mb-3">⚙️ Current Settings</h5>
+    <div class="row">
+      <div class="col-md-6">
+        <div class="list-group">
+          <div class="list-group-item d-flex justify-content-between align-items-center">
+            Welcome Messages
+            <span class="badge <%= threadData.settings.sendWelcomeMessage ? 'bg-success' : 'bg-secondary' %>">
+              <%= threadData.settings.sendWelcomeMessage ? 'ON' : 'OFF' %>
+            </span>
+          </div>
+          <div class="list-group-item d-flex justify-content-between align-items-center">
+            Leave Messages
+            <span class="badge <%= threadData.settings.sendLeaveMessage ? 'bg-success' : 'bg-secondary' %>">
+              <%= threadData.settings.sendLeaveMessage ? 'ON' : 'OFF' %>
+            </span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="list-group">
+          <div class="list-group-item d-flex justify-content-between align-items-center">
+            Rank System
+            <span class="badge <%= threadData.settings.sendRankupMessage ? 'bg-success' : 'bg-secondary' %>">
+              <%= threadData.settings.sendRankupMessage ? 'ON' : 'OFF' %>
+            </span>
+          </div>
+          <div class="list-group-item d-flex justify-content-between align-items-center">
+            Custom Commands
+            <span class="badge <%= threadData.settings.customCommand ? 'bg-success' : 'bg-secondary' %>">
+              <%= threadData.settings.customCommand ? 'ON' : 'OFF' %>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Back Button -->
+  <div class="text-center mt-4">
+    <a href="/dashboard/<%= threadID %>" class="btn btn-phoenix-secondary">
+      <i class="fas fa-arrow-left"></i> Back to Group Settings
+    </a>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  // Activity Distribution Chart
+  const ctx = document.getElementById('activityChart').getContext('2d');
+  
+  const members = <%- JSON.stringify(threadData.members.filter(m => m.inGroup)) %>;
+  const activityRanges = {
+    'Inactive (0)': 0,
+    'Low (1-10)': 0,
+    'Medium (11-50)': 0,
+    'High (51-200)': 0,
+    'Very High (200+)': 0
+  };
+
+  members.forEach(member => {
+    const count = member.count || 0;
+    if (count === 0) activityRanges['Inactive (0)']++;
+    else if (count <= 10) activityRanges['Low (1-10)']++;
+    else if (count <= 50) activityRanges['Medium (11-50)']++;
+    else if (count <= 200) activityRanges['High (51-200)']++;
+    else activityRanges['Very High (200+)']++;
+  });
+
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(activityRanges),
+      datasets: [{
+        data: Object.values(activityRanges),
+        backgroundColor: [
+          '#6c757d',
+          '#ffc107',
+          '#17a2b8',
+          '#28a745',
+          '#dc3545'
+        ],
+        borderWidth: 2,
+        borderColor: '#fff'
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: 'bottom'
+        },
+        title: {
+          display: true,
+          text: 'Member Activity Distribution'
+        }
+      }
+    }
+  });
+</script>
+
+<%~ includeFile("partials/footer.eta") %>

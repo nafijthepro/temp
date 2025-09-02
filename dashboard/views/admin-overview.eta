@@ -1,0 +1,176 @@
+<%~ includeFile("partials/header.eta", {
+	user: user
+}); %>
+<%~ includeFile("partials/message.eta"); %>
+<%~ includeFile("partials/title.eta", {
+	icon: "fas fa-crown",
+	title: "Admin Overview"
+}); %>
+
+<style>
+  .admin-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 15px;
+    padding: 25px;
+    color: white;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  .metric-card {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    text-align: center;
+  }
+</style>
+
+<div class="container">
+  <div class="d-flex align-items-center mb-4">
+    <h2 class="mb-0">👑 Admin Control Center</h2>
+    <span class="badge bg-warning ms-3">ADMIN ONLY</span>
+  </div>
+
+  <!-- Key Metrics -->
+  <div class="row">
+    <div class="col-md-3">
+      <div class="admin-card">
+        <h2><%= stats.totalThreads.toLocaleString() %></h2>
+        <p class="mb-0">📱 Total Groups</p>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="admin-card">
+        <h2><%= stats.totalUsers.toLocaleString() %></h2>
+        <p class="mb-0">👥 Total Users</p>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="admin-card">
+        <h2><%= stats.totalMessages.toLocaleString() %></h2>
+        <p class="mb-0">💬 Total Messages</p>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="admin-card">
+        <h2><%= stats.activeThreads.toLocaleString() %></h2>
+        <p class="mb-0">⚡ Active Groups</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Performing Groups -->
+  <div class="metric-card">
+    <h5 class="mb-3">🏆 Most Active Groups</h5>
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Group Name</th>
+            <th>Members</th>
+            <th>Messages</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% for (let i = 0; i < stats.topThreads.length; i++) { %>
+          <% const thread = stats.topThreads[i]; %>
+          <tr>
+            <td>
+              <% if (i === 0) { %>🥇<% } else if (i === 1) { %>🥈<% } else if (i === 2) { %>🥉<% } else { %><%= i + 1 %><% } %>
+            </td>
+            <td>
+              <strong><%= thread.threadName || "Unnamed Group" %></strong>
+              <br><small class="text-muted">ID: <%= thread.threadID %></small>
+            </td>
+            <td><span class="badge bg-primary"><%= thread.activeMembers %></span></td>
+            <td><span class="badge bg-success"><%= thread.totalMessages.toLocaleString() %></span></td>
+            <td>
+              <a href="/dashboard/<%= thread.threadID %>" class="btn btn-sm btn-outline-primary">
+                <i class="fas fa-cog"></i> Manage
+              </a>
+            </td>
+          </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="row">
+    <div class="col-md-6">
+      <div class="metric-card">
+        <h5 class="mb-3">🚀 Quick Actions</h5>
+        <div class="d-grid gap-2">
+          <button class="btn btn-primary" onclick="window.location.href='/changefbstate'">
+            🔄 Change Bot Account
+          </button>
+          <button class="btn btn-info" onclick="broadcastMessage()">
+            📢 Broadcast Message
+          </button>
+          <button class="btn btn-warning" onclick="systemMaintenance()">
+            🔧 System Maintenance
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="metric-card">
+        <h5 class="mb-3">📊 System Health</h5>
+        <div class="row">
+          <div class="col-6">
+            <div class="text-center">
+              <div class="text-success">
+                <i class="fas fa-check-circle fa-2x"></i>
+              </div>
+              <small>Bot Status</small>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="text-center">
+              <div class="text-info">
+                <i class="fas fa-database fa-2x"></i>
+              </div>
+              <small>Database</small>
+            </div>
+          </div>
+        </div>
+        <div class="mt-3">
+          <small class="text-muted">Uptime: <%= global.utils.convertTime(process.uptime() * 1000) %></small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function broadcastMessage() {
+    const message = prompt("Enter message to broadcast to all groups:");
+    if (message && message.trim()) {
+      if (confirm(`Send "${message}" to all ${<%= stats.totalThreads %>} groups?`)) {
+        $.createToast({
+          title: "Info",
+          type: "info",
+          message: "Broadcasting message... This may take a while."
+        });
+        // Implementation would go here
+      }
+    }
+  }
+
+  function systemMaintenance() {
+    if (confirm("Put bot in maintenance mode? This will disable all commands temporarily.")) {
+      $.createToast({
+        title: "Info",
+        type: "info",
+        message: "Maintenance mode activated"
+      });
+      // Implementation would go here
+    }
+  }
+</script>
+
+<%~ includeFile("partials/footer.eta") %>

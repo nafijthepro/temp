@@ -8,6 +8,194 @@ module.exports = function ({ isAuthenticated, isVeryfiUserIDFacebook, checkHasAn
 	const apiLimiter = createLimiter(1000 * 60 * 5, 10);
 
 	router
+		// New 2025 Feature: Leave Group API
+		.post("/thread/leave-group", [isAuthenticated, isVeryfiUserIDFacebook, apiLimiter], async function (req, res) {
+			const { threadID } = req.body;
+			const userID = req.user.facebookUserID;
+
+			if (!threadID) {
+				return res.status(400).json({
+					status: "error",
+					error: "THREAD_ID_REQUIRED",
+					message: "Thread ID is required"
+				});
+			}
+
+			try {
+				const api = global.GoatBot?.fcaApi;
+				if (!api) {
+					return res.status(500).json({
+						status: "error",
+						error: "BOT_OFFLINE",
+						message: "Bot is currently offline"
+					});
+				}
+
+				// Check if user has permission (admin or authorized member)
+				if (!checkAuthConfigDashboardOfThread(threadID, userID)) {
+					return res.status(403).json({
+						status: "error",
+						error: "PERMISSION_DENIED",
+						message: "You don't have permission to make the bot leave this group"
+					});
+				}
+
+				// Send goodbye message before leaving
+				await api.sendMessage("👋 Bot is leaving this group as requested by an administrator. Thank you for using GoatBot!", threadID);
+				
+				// Wait a moment then leave
+				setTimeout(async () => {
+					try {
+						await api.removeUserFromGroup(api.getCurrentUserID(), threadID);
+					} catch (leaveError) {
+						console.error("Error leaving group:", leaveError);
+					}
+				}, 2000);
+
+				return res.json({
+					status: "success",
+					message: "Bot will leave the group shortly"
+				});
+			} catch (error) {
+				console.error("Leave group error:", error);
+				return res.status(500).json({
+					status: "error",
+					error: "INTERNAL_ERROR",
+					message: error.message || "An error occurred while leaving the group"
+				});
+			}
+		})
+
+		// New 2025 Feature: Bulk Group Management
+		.post("/thread/bulk-action", [isAuthenticated, isVeryfiUserIDFacebook, apiLimiter], async function (req, res) {
+			const { action, threadIDs } = req.body;
+			const userID = req.user.facebookUserID;
+
+			if (!action || !threadIDs || !Array.isArray(threadIDs)) {
+				return res.status(400).json({
+					status: "error",
+					error: "INVALID_REQUEST",
+					message: "Action and threadIDs array are required"
+				});
+			}
+
+			// Only allow bot admins for bulk actions
+			if (!global.GoatBot.config.adminBot.includes(userID)) {
+				return res.status(403).json({
+					status: "error",
+					error: "PERMISSION_DENIED",
+					message: "Only bot administrators can perform bulk actions"
+				});
+			}
+
+			try {
+				const api = global.GoatBot?.fcaApi;
+				if (!api) {
+					return res.status(500).json({
+						status: "error",
+						error: "BOT_OFFLINE",
+						message: "Bot is currently offline"
+					});
+				}
+
+				const results = [];
+				
+				for (const threadID of threadIDs) {
+					try {
+						switch (action) {
+							case "leave":
+								await api.sendMessage("👋 Bot is leaving this group due to bulk management action.", threadID);
+								setTimeout(() => api.removeUserFromGroup(api.getCurrentUserID(), threadID), 1000);
+								results.push({ threadID, status: "success", message: "Left group" });
+								break;
+							case "archive":
+								await api.changeArchivedStatus(threadID, true);
+								results.push({ threadID, status: "success", message: "Archived thread" });
+								break;
+							case "unarchive":
+								await api.changeArchivedStatus(threadID, false);
+								results.push({ threadID, status: "success", message: "Unarchived thread" });
+								break;
+							default:
+								results.push({ threadID, status: "error", message: "Unknown action" });
+						}
+					} catch (error) {
+						results.push({ threadID, status: "error", message: error.message });
+					}
+				}
+
+				return res.json({
+					status: "success",
+					results: results
+				});
+			} catch (error) {
+				console.error("Bulk action error:", error);
+				return res.status(500).json({
+					status: "error",
+					error: "INTERNAL_ERROR",
+					message: "An error occurred during bulk action"
+				});
+			}
+		})
+
+		// Enhanced thread statistics API
+		.get("/thread/stats/:threadID", [isAuthenticated, isVeryfiUserIDFacebook, checkHasAndInThread], async function (req, res) {
+			const { threadID } = req.params;
+			
+			try {
+				const threadData = await threadsData.get(threadID);
+				const allUsers = await usersData.getAll();
+				
+				// Calculate thread statistics
+				const threadMembers = threadData.members.filter(m => m.inGroup);
+				const activeMembers = threadMembers.filter(m => m.count > 0);
+				const totalMessages = threadMembers.reduce((sum, m) => sum + (m.count || 0), 0);
+				
+				// Gender distribution
+				const genderStats = threadMembers.reduce((acc, member) => {
+					const userData = allUsers.find(u => u.userID == member.userID);
+					const gender = userData?.gender || 0;
+					if (gender === 1) acc.female++;
+					else if (gender === 2) acc.male++;
+					else acc.unknown++;
+					return acc;
+				}, { male: 0, female: 0, unknown: 0 });
+
+				// Activity stats
+				const mostActiveUser = threadMembers.reduce((max, member) => 
+					(member.count || 0) > (max.count || 0) ? member : max, threadMembers[0]);
+
+				const stats = {
+					threadName: threadData.threadName,
+					totalMembers: threadMembers.length,
+					activeMembers: activeMembers.length,
+					totalMessages: totalMessages,
+					averageMessages: Math.round(totalMessages / threadMembers.length) || 0,
+					genderDistribution: genderStats,
+					mostActiveUser: mostActiveUser ? {
+						name: mostActiveUser.name,
+						userID: mostActiveUser.userID,
+						messageCount: mostActiveUser.count || 0
+					} : null,
+					createdAt: threadData.createdAt,
+					lastActivity: threadData.updatedAt,
+					settings: threadData.settings
+				};
+
+				return res.json({
+					status: "success",
+					data: stats
+				});
+			} catch (error) {
+				console.error("Thread stats error:", error);
+				return res.status(500).json({
+					status: "error",
+					error: "INTERNAL_ERROR",
+					message: "Failed to get thread statistics"
+				});
+			}
+		})
+
 		.post("/delete/:slug", [isAuthenticated, isVeryfiUserIDFacebook, checkHasAndInThread, middlewareCheckAuthConfigDashboardOfThread, apiLimiter], async function (req, res) {
 			const { fileIDs, threadID, location } = req.body;
 			if (!fileIDs || !fileIDs.length)

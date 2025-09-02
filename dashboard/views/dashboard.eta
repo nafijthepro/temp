@@ -9,12 +9,73 @@
   .table>:not(caption)>*>* {
     padding: 0.5rem 0.5rem;
   }
+  .group-card {
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .group-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  }
+  .bulk-actions {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
 </style>
 
 <div class="container">
 
-  <h3>List of Groups You Manage</h3>
+  <!-- Enhanced Header with Stats -->
+  <div class="row mb-4">
+    <div class="col-md-8">
+      <h2>🎛️ Dashboard 2025</h2>
+      <p class="text-muted">Manage your groups with advanced tools and analytics</p>
+    </div>
+    <div class="col-md-4 text-end">
+      <div class="row">
+        <div class="col-6">
+          <div class="text-center">
+            <h4 class="mb-0 text-primary"><%= threads.length %></h4>
+            <small class="text-muted">Groups</small>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="text-center">
+            <h4 class="mb-0 text-success"><%= threads.reduce((sum, t) => sum + (t.members?.filter(m => m.inGroup)?.length || 0), 0) %></h4>
+            <small class="text-muted">Members</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
+  <!-- Bulk Actions Panel (Admin Only) -->
+  <% if (global.GoatBot.config.adminBot.includes(user?.facebookUserID)) { %>
+  <div class="bulk-actions text-white mb-4">
+    <h5 class="mb-3">⚡ Bulk Management Tools</h5>
+    <div class="row">
+      <div class="col-md-8">
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="checkbox" id="selectAllGroups">
+          <label class="form-check-label" for="selectAllGroups">Select All</label>
+        </div>
+        <span id="selectedCount" class="ms-3 badge bg-light text-dark">0 selected</span>
+      </div>
+      <div class="col-md-4 text-end">
+        <button class="btn btn-light btn-sm me-2" onclick="bulkAction('leave')" disabled id="bulkLeaveBtn">
+          🚪 Leave Selected
+        </button>
+        <button class="btn btn-outline-light btn-sm" onclick="exportSelected()" disabled id="exportBtn">
+          📥 Export Selected
+        </button>
+      </div>
+    </div>
+  </div>
+  <% } %>
+
+  <!-- Search and Filter Controls -->
   <div class="d-sm-flex d-block align-items-center my-3">
     <div class="search-box me-2">
       <input class="form-control search-input search" type="search" placeholder="Type to search" aria-label="Search" id="search-input">
@@ -24,6 +85,13 @@
       <select class="form-select w-auto me-2 mt-2 mt-sm-0" id="searchBy" aria-label="Search By">
         <option value="thread_id" selected="selected">Box ID</option>
         <option value="thread_name">Box Name</option>
+        <option value="members">Member Count</option>
+      </select>
+      <select class="form-select w-auto me-2 mt-2 mt-sm-0" id="filterBy" aria-label="Filter By">
+        <option value="">All Groups</option>
+        <option value="active">Active (>10 members)</option>
+        <option value="small">Small (<10 members)</option>
+        <option value="large">Large (>50 members)</option>
       </select>
       <button class="btn btn-phoenix-primary text-nowrap mt-2 mt-sm-0" id="reset-button">
         <i class="fas fa-sync"></i>
@@ -33,19 +101,33 @@
   </div>
 
   <div data-list="" class="table-responsive" id="table-threads">
-    <table class="table table-bordered table-striped align-middle">
+    <table class="table table-hover align-middle">
       <thead>
         <tr>
+          <% if (global.GoatBot.config.adminBot.includes(user?.facebookUserID)) { %>
+          <th width="40">
+            <input type="checkbox" id="selectAllTableGroups">
+          </th>
+          <% } %>
           <th>#</th>
           <th class="sort" data-sort="thread_id">Box ID</th>
           <th class="sort" data-sort="thread_name">Box Name</th>
           <th class="sort" data-sort="members">Members</th>
+          <th class="sort" data-sort="messages">Messages</th>
+          <th>Status</th>
           <th>Action</th>
         </tr>
       </thead>
       <tbody class="list">
         <% for (let i = 0; i < threads.length; i++) { %>
+        <% const memberCount = Array.isArray(threads[i].members) ? threads[i].members.filter(m => m.inGroup).length : 0; %>
+        <% const messageCount = Array.isArray(threads[i].members) ? threads[i].members.reduce((sum, m) => sum + (m.count || 0), 0) : 0; %>
         <tr>
+          <% if (global.GoatBot.config.adminBot.includes(user?.facebookUserID)) { %>
+          <td>
+            <input type="checkbox" class="group-checkbox" value="<%= threads[i].threadID %>">
+          </td>
+          <% } %>
           <td class="ps-2">
             <%= i + 1 %>
           </td>
@@ -53,19 +135,37 @@
             <%= threads[i].threadID %>
           </td>
           <td class="thread_name">
-            <%= threads[i].threadName || "null" %>
+            <div>
+              <strong><%= threads[i].threadName || "Unnamed Group" %></strong>
+              <% if (threads[i].isGroup) { %>
+                <span class="badge bg-primary ms-1">Group</span>
+              <% } else { %>
+                <span class="badge bg-info ms-1">Private</span>
+              <% } %>
+            </div>
           </td>
           <td class="members">
-            <% if (Array.isArray(threads[i].members)) { %>
-              <%= threads[i].members.filter(m => m.inGroup).length %>
+            <span class="badge bg-secondary"><%= memberCount %></span>
+          </td>
+          <td class="messages">
+            <span class="badge bg-info"><%= messageCount.toLocaleString() %></span>
+          </td>
+          <td>
+            <% if (threads[i].settings?.sendWelcomeMessage || threads[i].settings?.sendLeaveMessage) { %>
+              <span class="badge bg-success">Active</span>
             <% } else { %>
-              0
+              <span class="badge bg-warning">Inactive</span>
             <% } %>
           </td>
           <td>
-            <a href="/dashboard/<%= threads[i].threadID %>" class="btn btn-phoenix-primary">
-              <i class="fa-solid fa-wrench"></i>
+            <a href="/dashboard/<%= threads[i].threadID %>" class="btn btn-phoenix-primary btn-sm me-1" title="Manage Group">
+              <i class="fa-solid fa-cog"></i>
             </a>
+            <% if (global.GoatBot.config.adminBot.includes(user?.facebookUserID)) { %>
+            <button class="btn btn-phoenix-danger btn-sm" onclick="quickLeaveGroup('<%= threads[i].threadID %>', '<%= threads[i].threadName %>')" title="Leave Group">
+              <i class="fa-solid fa-door-open"></i>
+            </button>
+            <% } %>
           </td>
         </tr>
         <% } %>
@@ -76,7 +176,7 @@
 
   <script>
     const options = {
-      valueNames: ["thread_id", "thread_name", "members"],
+      valueNames: ["thread_id", "thread_name", "members", "messages"],
       page: 10,
       pagination: true
     };
@@ -86,6 +186,7 @@
     const resetButton = $("#reset-button");
     const searchInput = $("#search-input");
     const searchBy = $("#searchBy");
+    const filterBy = $("#filterBy");
 
     $("#search-input, #searchBy").on("keyup change paste", function () {
       const searchValue = searchInput.val();
@@ -96,10 +197,182 @@
         listThread.search();
     });
 
+    // Filter functionality
+    filterBy.on("change", function() {
+      const filterValue = $(this).val();
+      if (!filterValue) {
+        listThread.filter();
+        return;
+      }
+      
+      listThread.filter(function(item) {
+        const memberCount = parseInt(item.values().members);
+        switch(filterValue) {
+          case "active": return memberCount >= 10;
+          case "small": return memberCount < 10;
+          case "large": return memberCount > 50;
+          default: return true;
+        }
+      });
+    });
+
     resetButton.on("click", function () {
       searchInput.val("");
+      filterBy.val("");
       listThread.search();
+      listThread.filter();
     });
+
+    <% if (global.GoatBot.config.adminBot.includes(user?.facebookUserID)) { %>
+    // Bulk selection functionality
+    let selectedGroups = [];
+    
+    function updateBulkButtons() {
+      const count = selectedGroups.length;
+      $("#selectedCount").text(count + " selected");
+      $("#bulkLeaveBtn, #exportBtn").prop("disabled", count === 0);
+    }
+
+    $(document).on("change", ".group-checkbox", function() {
+      const threadID = $(this).val();
+      if ($(this).is(":checked")) {
+        if (!selectedGroups.includes(threadID)) {
+          selectedGroups.push(threadID);
+        }
+      } else {
+        selectedGroups = selectedGroups.filter(id => id !== threadID);
+      }
+      updateBulkButtons();
+    });
+
+    $("#selectAllGroups, #selectAllTableGroups").on("change", function() {
+      const isChecked = $(this).is(":checked");
+      $(".group-checkbox").prop("checked", isChecked);
+      
+      if (isChecked) {
+        selectedGroups = $(".group-checkbox").map(function() { return $(this).val(); }).get();
+      } else {
+        selectedGroups = [];
+      }
+      updateBulkButtons();
+      
+      // Sync both select all checkboxes
+      $("#selectAllGroups, #selectAllTableGroups").prop("checked", isChecked);
+    });
+
+    // Bulk Actions
+    window.bulkAction = function(action) {
+      if (selectedGroups.length === 0) {
+        $.createToast({
+          title: "Warning",
+          type: "warning",
+          message: "Please select at least one group"
+        });
+        return;
+      }
+
+      if (action === "leave") {
+        if (confirm(`⚠️ Are you sure you want the bot to leave ${selectedGroups.length} selected groups?\n\nThis action cannot be undone!`)) {
+          $("#bulkLeaveBtn").prop("disabled", true).html('<span class="spinner-border spinner-border-sm"></span> Leaving...');
+          
+          $.ajax({
+            url: "/api/thread/bulk-action",
+            method: "POST",
+            data: {
+              action: "leave",
+              threadIDs: selectedGroups
+            },
+            success: function(response) {
+              const successCount = response.results.filter(r => r.status === "success").length;
+              $.createToast({
+                title: "Success",
+                type: "success",
+                message: `Bot left ${successCount} groups successfully`
+              });
+              setTimeout(() => location.reload(), 2000);
+            },
+            error: function(err) {
+              $.createToast({
+                title: "Error",
+                type: "error",
+                message: "Failed to perform bulk action"
+              });
+            },
+            complete: function() {
+              $("#bulkLeaveBtn").prop("disabled", false).html('🚪 Leave Selected');
+            }
+          });
+        }
+      }
+    };
+
+    // Export Selected Groups
+    window.exportSelected = function() {
+      if (selectedGroups.length === 0) {
+        $.createToast({
+          title: "Warning",
+          type: "warning",
+          message: "Please select at least one group"
+        });
+        return;
+      }
+
+      const selectedThreads = <%- JSON.stringify(threads) %>.filter(t => selectedGroups.includes(t.threadID));
+      const exportData = {
+        exportDate: new Date().toISOString(),
+        totalGroups: selectedThreads.length,
+        groups: selectedThreads.map(t => ({
+          threadID: t.threadID,
+          threadName: t.threadName,
+          memberCount: t.members?.filter(m => m.inGroup)?.length || 0,
+          messageCount: t.members?.reduce((sum, m) => sum + (m.count || 0), 0) || 0,
+          settings: t.settings,
+          isGroup: t.isGroup
+        }))
+      };
+
+      const dataStr = JSON.stringify(exportData, null, 2);
+      const dataBlob = new Blob([dataStr], {type: 'application/json'});
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `selected_groups_export_${new Date().toISOString().split('T')[0]}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+      
+      $.createToast({
+        title: "Success",
+        type: "success",
+        message: `Exported ${selectedGroups.length} groups successfully!`
+      });
+    };
+
+    // Quick Leave Group
+    window.quickLeaveGroup = function(threadID, threadName) {
+      if (confirm(`⚠️ Make bot leave "${threadName}"?\n\nThis action cannot be undone!`)) {
+        $.ajax({
+          url: "/api/thread/leave-group",
+          method: "POST",
+          data: { threadID: threadID },
+          success: function(response) {
+            $.createToast({
+              title: "Success",
+              type: "success",
+              message: `Bot left "${threadName}" successfully`
+            });
+            setTimeout(() => location.reload(), 1500);
+          },
+          error: function(err) {
+            $.createToast({
+              title: "Error",
+              type: "error",
+              message: "Failed to leave group"
+            });
+          }
+        });
+      }
+    };
+    <% } %>
   </script>
 
 </div>
